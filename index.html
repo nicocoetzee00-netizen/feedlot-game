@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#10130d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Feedlot">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Feedlot Manager</title>
+<style>
+:root{color-scheme:dark;--bg:#10130d;--pn:#1b2117;--cd:#262e21;--cd2:#313b2b;--tx:#ebe8da;--mu:#a3a58d;--ac:#e2a63a;--gd:#82cc74;--bd:#ea6a55;--bl:#6fb4dc;--ln:#3a4433}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.35 system-ui,Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100%;max-width:560px;margin:0 auto;background:var(--pn)}
+#hud{display:grid;grid-template-columns:auto 1fr auto;gap:1px 10px;padding:5px 10px;background:var(--bg);font-size:12.5px;align-items:center}
+#hud .r{text-align:right}#hud b{font-weight:650}
+#stage{position:relative;flex:0 0 auto;height:min(39dvh,calc(min(100vw,560px)*.78));touch-action:manipulation;background:#5f8a3c}
+#cv{width:100%;height:100%;display:block}
+#ctl{position:absolute;left:0;right:0;bottom:5px;display:flex;gap:5px;justify-content:center}
+.sp{border:0;border-radius:14px;padding:6px 11px;background:rgba(16,19,13,.78);color:var(--tx);font:600 13px system-ui;min-width:40px}
+.sp.on{background:var(--ac);color:#201808}
+#back{position:absolute;left:6px;top:6px;border:0;border-radius:14px;padding:6px 11px;background:rgba(16,19,13,.78);color:var(--tx);font:600 12.5px system-ui;display:none}
+#vp{position:absolute;right:6px;top:6px;border:0;border-radius:14px;padding:6px 11px;background:rgba(16,19,13,.78);color:var(--tx);font:600 12.5px system-ui}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+#toast{position:absolute;left:10px;right:10px;top:40px;text-align:center;pointer-events:none;opacity:0;transition:opacity .3s}
+#toast span{display:inline-block;background:rgba(16,19,13,.88);padding:6px 12px;border-radius:12px;font-size:12.5px}
+#tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--ln)}
+#tabs button{flex:1;border:0;background:none;color:var(--mu);padding:5px 0 4px;font:600 10.5px system-ui;border-top:2px solid transparent}
+#tabs button i{display:block;font-style:normal;font-size:17px;line-height:1.1}
+#tabs button.on{color:var(--ac);border-top-color:var(--ac)}
+#panel{flex:1;overflow-y:auto;padding:8px 10px 40px;-webkit-overflow-scrolling:touch}
+.card{background:var(--cd);border-radius:12px;padding:10px 11px;margin-bottom:9px}
+.card h3{margin:0 0 6px;font-size:13.5px;font-weight:650;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h4{margin:9px 0 4px;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);font-weight:650}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}
+.kv{display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(255,255,255,.05);padding:2px 0;font-size:12.5px}
+.kv span:first-child{color:var(--mu)}.kv span:last-child{font-weight:600;text-align:right}
+.mu{color:var(--mu);font-size:12px}.sm{font-size:11.5px}
+.g{color:var(--gd)}.b{color:var(--bd)}.a{color:var(--ac)}.bl{color:var(--bl)}
+.btn{border:0;border-radius:10px;padding:9px 12px;background:var(--cd2);color:var(--tx);font:600 13px system-ui;margin:2px 3px 2px 0}
+.btn.pri{background:var(--ac);color:#241a07}.btn.dng{background:#7a3328}.btn[disabled]{opacity:.4}
+.btn.sm{padding:6px 9px;font-size:12px}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px}
+.chip{flex:0 0 auto;border:1px solid var(--ln);border-radius:14px;padding:5px 10px;background:var(--cd);color:var(--tx);font:600 12px system-ui}
+.chip.on{background:var(--ac);color:#241a07;border-color:var(--ac)}
+.bar{height:7px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:3px 0 5px}
+.bar i{display:block;height:100%;background:var(--gd)}
+.bar.w i{background:var(--ac)}.bar.d i{background:var(--bd)}.bar.c i{background:var(--bl)}
+select,input[type=range]{width:100%}
+select{background:var(--cd2);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:8px;font:13px system-ui}
+input[type=range]{accent-color:var(--ac);margin:2px 0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:4px 3px;text-align:right;border-bottom:1px solid rgba(255,255,255,.06)}th{color:var(--mu);font-weight:600}td:first-child,th:first-child{text-align:left}
+.ch{width:100%;height:auto;display:block}
+.ch text{fill:var(--mu);font-size:9px}
+.lst{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.log div{padding:3px 0;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.05)}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9;overflow-y:auto}
+.mc{max-width:520px;margin:5vh auto;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:14px 14px 10px}
+.mc h2{margin:0 0 8px;font-size:17px}
+.tag{display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(255,255,255,.1);font-size:11px;margin-right:3px}
+label.ck{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:12.5px}
+label.ck input{margin-top:3px;accent-color:var(--ac)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud"></div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <button id="back" data-act="farm">◀ Farm view</button>
+    <button id="vp" data-act="vpas">🌱 Pasture</button>
+    <div id="toast"><span></span></div>
+    <div id="ctl"></div>
+  </div>
+  <div id="tabs"></div>
+  <div id="panel"></div>
+</div>
+<div id="modal"></div>
+
+<script>
+(()=>{'use strict';
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s);
+const R=(a,b)=>a+Math.random()*(b-a);
+const RI=(a,b)=>Math.floor(R(a,b+1));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+const binom=(n,p)=>{let k=0;for(let i=0;i<n;i++)if(Math.random()<p)k++;return k};
+function num(x,d=0){const s=Math.abs(x).toFixed(d);let[i,f]=s.split('.');i=i.replace(/\B(?=(\d{3})+(?!\d))/g,' ');return(x<0&&+s!==0?'-':'')+i+(f?'.'+f:'')}
+function money(x,d=0){return(x<0&&Math.round(x)!==0?'−':'')+'R'+num(Math.abs(x),d)}
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const hex2=h=>{h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))};
+const mix=(a,b,t)=>{const A=hex2(a),B=hex2(b);return'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'};
+const SAVEKEY='feedlot_mgr_v5';
+
+/* ============ static data ============ */
+// order matters: index used in ration arrays
+const ING=[
+ {id:'maize',s:'Maize',n:'Yellow maize (rolled)',dm:.88,me:13.4,cp:9,ndf:10,st:72,p:3900,g:'grain'},
+ {id:'hominy',s:'Hominy chop',n:'Hominy chop',dm:.89,me:13.0,cp:11,ndf:24,st:50,p:3000,g:'grain'},
+ {id:'soya',s:'Soya oilcake',n:'Soya oilcake',dm:.90,me:13.2,cp:48,ndf:14,st:5,p:7000,g:'prot'},
+ {id:'urea',s:'Urea',n:'Feed-grade urea',dm:.99,me:0,cp:280,ndf:0,st:0,p:11500,g:'prot'},
+ {id:'lucerne',s:'Lucerne',n:'Lucerne hay',dm:.90,me:9.0,cp:18,ndf:44,st:3,p:3600,g:'hay'},
+ {id:'erag',s:'Eragrostis',n:'Eragrostis hay',dm:.90,me:7.8,cp:6,ndf:68,st:2,p:2200,g:'hay'},
+ {id:'molasses',s:'Molasses',n:'Molasses',dm:.75,me:12.0,cp:5,ndf:0,st:60,p:2600,g:'flat'},
+ {id:'premix',s:'Premix',n:'Feedlot premix',dm:.95,me:3,cp:5,ndf:0,st:0,p:13500,g:'flat'}];
+const SEAS={
+ grain:[1.12,1.14,1.08,.98,.92,.90,.92,.95,.98,1.03,1.08,1.10],
+ hay:[.95,.95,.95,.97,1.0,1.06,1.12,1.15,1.12,1.05,.98,.95],
+ prot:[1.03,1.03,1.02,1.0,.98,.97,.97,.98,1.0,1.02,1.03,1.03],
+ flat:[1,1,1,1,1,1,1,1,1,1,1,1],
+ w:[.97,.95,.94,.93,.95,.97,1.0,1.03,1.05,1.06,1.05,1.0],
+ c:[.98,.98,.99,1.0,1.0,1.0,1.0,1.0,1.0,1.01,1.02,1.04]};
+const PRE=[
+ {n:'Receiving',p:[5,20,6,0,35,25,7,2]},
+ {n:'Step-up 1',p:[14,24,5,0,28,20,7,2]},
+ {n:'Step-up 2',p:[28,24,5,0,20,14,7,2]},
+ {n:'Grower',p:[42,22,4,0,12,12,6,2]},
+ {n:'Finisher',p:[55,20,5,.8,4,8,5,2.2]},
+ {n:'Pasture lick',p:[20,25,24,1.4,0,0,18.6,11]}];
+const BR={
+ bons:{n:'Bonsmara',fin:500,heat:.9,brd:1.0,eff:1.0,dr:55.5,pr:1.0,cp:1.0,col:'#8c4a28'},
+ brah:{n:'Brahman cross',fin:520,heat:.6,brd:.9,eff:.97,dr:54.5,pr:.96,cp:.98,col:'#b9a98d'},
+ angus:{n:'Angus cross',fin:470,heat:1.25,brd:1.0,eff:1.04,dr:56.5,pr:1.04,cp:1.03,col:'#34343a'},
+ simm:{n:'Simmentaler cross',fin:560,heat:1.1,brd:1.1,eff:1.0,dr:56,pr:1.02,cp:1.0,col:'#a6432b'},
+ nguni:{n:'Nguni',fin:400,heat:.5,brd:.7,eff:.94,dr:53.5,pr:.92,cp:.97,col:'#6c5e54'},
+ mixed:{n:'Mixed crossbreds',fin:500,heat:1.0,brd:1.05,eff:.99,dr:55,pr:.97,cp:.98,col:'#7b5a3a'}};
+const SRC={
+ farm:{n:'Direct from farm',risk:.7,pm:1.05,shr:.04},
+ auc:{n:'Auction lot',risk:1.0,pm:1.0,shr:.06},
+ trader:{n:'Trader / sale-yard mix',risk:1.5,pm:.94,shr:.08}};
+const PROC=[
+ {id:'clo',n:'Clostridial, botulism & lumpy skin vaccines',c:48,d:'Prevents sudden-death clostridial losses and most lumpy skin disease.'},
+ {id:'brd',n:'Respiratory (BRD) vaccine',c:42,d:'About 30% fewer BRD cases.'},
+ {id:'dip',n:'Deworm + tick/lice treatment',c:38,d:'About +3% ADG.'},
+ {id:'imp',n:'Growth implant',c:60,d:'About +8% ADG for ~120 days. Some premium markets disallow implants.'},
+ {id:'meta',n:'Arrival metaphylaxis (antibiotic)',c:95,d:'About 60% fewer early BRD cases. Adds a 28-day withdrawal period.'}];
+const TIERN=['','Backyard','Smallholding','Commercial','Large feedlot','Industrial'];
+const TIERSZ=['','1–20 head','20–100 head','100–500 head','500–1 500 head','1 500+ head'];
+const PENTIER=[1,1,2,2,3,3,4,4];
+const UPG=[
+ {id:'penSize',n:'Enlarge pens',lv:[25000,60000,130000,260000,500000,900000],t:[1,2,2,3,4,4],d:['All pens 10 → 20 head (240 m²)','20 → 30 head','30 → 50 head','50 → 80 head','80 → 120 head','120 → 200 head'],sc:'pens'},
+ {id:'shade',n:'Shade structures',lv:[20000,45000],t:[1,2],d:['Shade net over part of the pen: heat load −20%','Full shade: heat load −40%'],sc:'cap'},
+ {id:'spr',n:'Sprinklers',lv:[15000],t:[1],d:['Heat load −25% (stacks with shade)'],sc:'cap'},
+ {id:'drain',n:'Pen drainage & concrete apron',lv:[15000,40000,90000],t:[1,2,3],d:['Mud build-up −25%','Mud build-up −50%','Mud build-up −70%'],sc:'cap'},
+ {id:'silo',n:'Feed storage',lv:[25000,70000,160000,350000,700000],t:[1,2,3,4,4],d:['Feed shed: 8 → 20 t','Small silos: 20 → 60 t','Silo bank: 60 → 150 t','Large silos: 150 → 300 t','Silo complex: 300 → 600 t']},
+ {id:'mixer',n:'Feed mixing equipment',lv:[75000,220000,480000],t:[1,3,4],d:['Small mixer: less hand-feeding time, wastage 5% → 3%, even mixing','Mixer wagon: wastage 3% → 2%, much less labour','Feed mill: wastage 2% → 1%, minimal labour']},
+ {id:'hosp',n:'Hospital pen',lv:[25000],t:[2],d:['Treatment success +8%, earlier detection']},
+ {id:'crush',n:'Handling facility (crush) & scale',lv:[30000],t:[1],d:['Exact weights, calmer handling (BRD risk −10%)']},
+ {id:'gen',n:'Standby generator',lv:[30000],t:[2],d:['Mixing continues during load-shedding']},
+ {id:'fence',n:'Security & fencing',lv:[20000],t:[1],d:['Stock theft risk −75%']},
+ {id:'permit',n:'Environmental & water-use authorisation',lv:[150000],t:[3],d:['Needed in this game above 500 head and adds R12 000/month compliance. Takes 90 days to approve. Real thresholds and costs differ, so check with your consultant.']}];
+const MIX=[
+ {id:'kik',n:'Kikuyu + white clover',cost:11500,est:75,win:[8,9,10,11],ann:false,cl:.25,K:8000,bl:.8,frost:.15,heat:1,
+  curve:[70,65,50,30,12,4,4,8,25,48,62,70],me:[10.3,7.8],cp:[20,9],note:'Perennial summer grass that goes dormant in winter. Strong in summer; watch armyworm and kikuyu poisoning.'},
+ {id:'rye',n:'Annual ryegrass + clover',cost:6800,est:50,win:[2,3,4],ann:true,cl:.30,K:6500,bl:1,frost:1,heat:.5,
+  curve:[0,0,14,30,42,36,32,44,72,78,50,16],me:[11.8,8.5],cp:[24,10],note:'Cool-season annual: plant in autumn, graze winter to spring, finished by early summer heat. Highest quality and highest bloat risk.'},
+ {id:'teff',n:'Teff / Eragrostis + legume',cost:4200,est:45,win:[9,10,11,0],ann:true,cl:.2,K:7000,bl:.5,frost:0,heat:1,
+  curve:[80,70,45,18,0,0,0,0,0,30,55,75],me:[10.0,7.5],cp:[17,7],note:'Fast, cheap summer annual. Frost kills it, so plan to be finished before May.'},
+ {id:'rus',n:'Russian grass (Green Mamba) + clover',cost:10000,est:120,win:[9,10,11,0],ann:false,cl:.25,K:6500,bl:.4,frost:1,heat:.7,wet:true,
+  curve:[45,42,40,35,28,22,20,28,45,55,55,48],me:[10.9,8.2],cp:[28,12],note:'Seller claims (not verified): a Phalaris-type perennial with 25–35% protein, about 1 kg/day weaner gains and cold hardiness to −20 °C. First cattle grazing about 120 days after planting. Needs shallow subsoil moisture all year or irrigation and is not a dryland grass, so without seepage land or irrigation its growth is cut. R10 000/ha breeder seed.'}];
+const PEQ=[
+ {id:'perim',n:'Perimeter fence',lv:[12,45,95],d:['Temporary 2-strand polywire perimeter (R12/m): cheap, calves break out now and then','Permanent 3-strand electric fence (R45/m)','Five-strand fence with droppers (R95/m): very few escapes']},
+ {id:'en',n:'Solar energizer',lv:[3500,9500,28000,65000],t:[1,1,2,4],d:['0.5 J: covers up to 2 ha','3 J: up to 20 ha','12 J: up to 200 ha','25 J: up to 1 000 ha']},
+ {id:'kit',n:'Strip-grazing kit (polywire, step-in posts, reels)',lv:[2800,9500,26000,70000],t:[1,1,2,3],d:['Starter kit: up to 6 strips','Standard kit: up to 20 strips','Large kit: up to 40 strips','Geared reels and long runs: up to 100 strips']},
+ {id:'pwater',n:'Water for the mob',lv:[2800,0],d:['Portable trough and 100 m hose','Buried pipe with quick-couplers in every strip (R12 000/ha): less labour, +3% intake']},
+ {id:'pshade',n:'Portable shade',lv:[9500],d:['Shade-cloth frames that move with the mob: heat load −25%']},
+ {id:'irr',n:'Irrigation',lv:[0,0],t:[1,3],base:[12000,30000],perha:[6500,30000],d:['Hose-pull sprinklers: keeps soil moisture up (about R900/ha per irrigation)','Solid-set sprinkler lines with pump (about R600/ha per irrigation, much less labour)']}];
+const ENHA=[0,2,20,200,1000],KITMAX=[1,6,20,40,100],LANDMAX=[0,2,10,60,300,1000];
+const SILO=[8,20,60,150,300,600];
+const PENCOST=[0,18000,25000,35000,45000,60000,80000,100000];
+const PENCAP=[10,20,30,50,80,120,200];
+const WAGE=8500, STOCKMAN=16500, VET=5500;
+const CLI={tmax:[27,26,25,22,19,16.5,17,20,24,25.5,26,27],tmin:[15.5,15,13,9.5,4.5,1,.5,3.5,8,11,13,15],
+ pr:[.38,.34,.28,.17,.06,.02,.02,.03,.06,.17,.30,.37],mm:[14,14,12,10,8,6,6,7,9,12,13,14]};
+const GRASS=['#5f8a3c','#5f8a3c','#6f8a3e','#8a8f45','#9a9a52','#a89c63','#a89c63','#a39a5c','#8a9548','#7a9242','#66903c','#5f8a3c'];
+const DAYMS=[0,10000,5000,2500,1000];
+
+/* ============ state ============ */
+let G=null;
+const SP=[];
+const ui={speed:0,phase:0,tab:'pens',sel:0,view:'farm',modal:false,rEdit:4,buy:null,mkt:'buy',toastT:0,lastClock:''};
+
+/* ============ time / seasons ============ */
+const month=()=>new Date(G.t).getUTCMonth();
+function seas(arr){const d=new Date(G.t),m=d.getUTCMonth(),f=(d.getUTCDate()-1)/30;return arr[m]*(1-f)+arr[(m+1)%12]*f}
+const evGet=t=>G.ev.find(e=>e.t===t);
+function dateStr(){const d=new Date(G.t);return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getUTCDay()]+' '+d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+d.getUTCFullYear()}
+function L(txt,k){G.log.unshift({day:G.day,t:G.t,txt,k:k||'info'});if(G.log.length>250)G.log.pop()}
+function toast(t){const e=$('#toast');e.firstChild.textContent=t;e.style.opacity=1;ui.toastT=performance.now()+3200}
+
+/* ============ finance ============ */
+function bump(o,c,a){o[c]=(o[c]||0)+a}
+function spend(c,a){G.cash-=a;['cur','all'].forEach(k=>bump(G.fin[k].o,c,a))}
+function earn(c,a){G.cash+=a;['cur','all'].forEach(k=>bump(G.fin[k].i,c,a))}
+const penCap=()=>PENCAP[G.upg.penSize||0];
+const penMax=()=>Math.round(penCap()*1.2);
+const builtN=()=>G.pens.filter(p=>p.built).length;
+const capTotal=()=>builtN()*penCap();
+const tierOf=()=>G.tier||1;
+const SPREAD=[0,.06,.05,.035,.02,.01],LSPREAD=[0,.04,.03,.02,.01,0];
+const LIMIT_F=()=>Math.round(10000+.30*Math.max(0,G.nwc||0)+2500*Math.min(G.nGood||0,20));
+const MAXLOAN_F=()=>tierOf()<2?0:Math.round(.6*Math.max(0,G.nwc||0)*(tierOf()>=3?1.3:1));
+const fixedMonthly=()=>500+builtN()*400*Math.pow(penCap()/10,.8)+[0,0,0,2500,9000,30000][tierOf()]+(G.upg.permit?12000:0);
+const penCost=i=>Math.round(PENCOST[i]*Math.pow(penCap()/10,.8)/500)*500;
+const upgCost=(u,lv)=>{const b=u.lv[lv];const m=u.sc==='pens'?builtN():u.sc==='cap'?Math.pow(capTotal()/10,.6):1;return Math.round(b*m/500)*500};
+const canPay=a=>G.cash-a>=-LIMIT_F();
+const permitOk=c=>c<=500||!!G.upg.permit;
+function haulCost(n){return n<=10?1200*Math.ceil(n/5):9500*Math.ceil(n/30)}
+function feedFactor(kg){return kg<1000?1.18:kg<5000?1.10:kg<15000?1.03:kg<28000?1:.95}
+function feedLead(kg){return kg<5000?1:kg<15000?2:3}
+function shownWt(g){if(G.upg.crush)return g.wt;const f=(G.day-(g.weighDay==null?-999:g.weighDay))<20?.12:1;return g.wt*(1+g.bias*f)}
+function workload(){
+  const head=totalHead(),mx=G.upg.mixer||0,LG=G.land.group,ph=LG?LG.n:0,penHead=head-ph;
+  const feed=penHead>0?[.5+.04*penHead,.3+.018*penHead,.2+.01*penHead,.2+.006*penHead][mx]:0;
+  const sick=G.pens.reduce((a,p)=>a+(p.group?p.group.cases.length:0),0);
+  const check=(.2+.03*head)/(G.staff.stockmen?1.5:1)+sick*.25;
+  let past=0;if(LG){const d=G.land.moveAuto?recDays().d:G.land.moveDays;past=.25+(.3+.1*Math.sqrt(landHa()))*(G.upg.pwater>=2?.6:1)/Math.max(1,d)}
+  const req=head?feed+check+.25*builtN()+past:.3;
+  return{req,cap:6+G.staff.workers*8+G.staff.stockmen*8};
+}
+function reqs(t){
+  const nw=G.nwc||0,ng=G.nGood||0;
+  if(t===2)return[['Net worth ≥ R150 000',nw>=150000],['3 profitable lots sold ('+Math.min(ng,3)+'/3)',ng>=3]];
+  if(t===3)return[['Net worth ≥ R600 000',nw>=600000],['10 profitable lots ('+Math.min(ng,10)+'/10)',ng>=10],['At least 1 general worker',G.staff.workers>=1],['Crush & scale installed',!!G.upg.crush]];
+  if(t===4)return[['Net worth ≥ R3 million',nw>=3e6],['25 profitable lots ('+Math.min(ng,25)+'/25)',ng>=25],['Vet on retainer',!!G.staff.vet],['Mixer wagon or better',(G.upg.mixer||0)>=2]];
+  if(t===5)return[['Net worth ≥ R12 million',nw>=12e6],['50 profitable lots ('+Math.min(ng,50)+'/50)',ng>=50],['Authorisation approved',!!G.upg.permit],['2 stockmen',G.staff.stockmen>=2]];
+  return[];
+}
+function updateTier(){
+  let t=G.tier||1;
+  while(t<5&&reqs(t+1).every(r=>r[1])){t++;L('🏆 Business tier '+t+': '+TIERN[t]+' ('+TIERSZ[t]+'). New equipment, pens and credit terms unlocked.','good');G.pause='You have grown into Tier '+t+': '+TIERN[t]+'. New upgrades, pens and credit terms are now available in the Build tab.'}
+  G.tier=t;
+}
+
+/* ============ rations ============ */
+function rcalc(arr){
+  const tot=arr.reduce((a,b)=>a+b,0)||1;let dm=0,me=0,cp=0,ndf=0,st=0,cost=0;
+  ING.forEach((g,i)=>{const f=arr[i]/tot,d=f*g.dm;dm+=d;me+=d*g.me;cp+=d*g.cp;ndf+=d*g.ndf;st+=d*g.st;cost+=f*G.price[g.id]/1000});
+  return{tot,dm,me:me/dm,cp:cp/dm,ndf:ndf/dm,st:st/dm,cost,costDM:cost/dm,norm:arr.map(v=>v/tot),urea:arr[3]/tot*100,prem:arr[7]/tot*100};
+}
+function slotFor(g){const d=g.dof;return g.auto?(d<7?0:d<14?1:d<21?2:d<56?3:4):g.slot}
+
+/* ============ weather ============ */
+function rollWeather(off){
+  const mo=new Date(G.t+off*864e5).getUTCMonth(),hw=evGet('heat'),cf=evGet('cold');
+  G.wanom=.7*(G.wanom||0)+gauss()*1.8;
+  const rain=Math.min(70,Math.random()<CLI.pr[mo]*(cf?3:1)?-Math.log(Math.random()+1e-9)*CLI.mm[mo]:0);
+  const tmax=CLI.tmax[mo]+G.wanom+gauss()*1.5+(hw?7:0)-(cf?7:0)-(rain>0?3:0);
+  const tmin=CLI.tmin[mo]+.6*G.wanom+gauss()*1.5-(cf?4:0)+(hw?3:0);
+  const hum=rain>0?85:clamp(35+CLI.pr[mo]*60+gauss()*8,20,80);
+  const thi=.8*tmax+hum/100*(tmax-14.4)+46.4;
+  return{tmax,tmin,rain,hum,heat:clamp((thi-72)/5,0,3),cold:clamp((5-(tmin-(rain>0?3:0)))/10,0,1.5),swing:tmax-tmin>20,anom:0};
+}
+function refillWeather(){G.wq=[];while(G.wq.length<4)G.wq.push(rollWeather(G.wq.length+1))}
+function weatherStep(){
+  if(!G.wq||G.wq.length<4)refillWeather();
+  G.w=G.wq.shift();G.wq.push(rollWeather(4));
+}
+function priceStep(){
+  G.infl*=1+.055/365;
+  ING.forEach(g=>{
+    const o=G.px[g.id];o.x+=-.015*o.x+.0065*gauss();o.x=clamp(o.x,-.3,.45);
+    let p=g.p*G.infl*seas(SEAS[g.g])*(1+o.x);
+    if(g.g==='grain'&&evGet('drought'))p*=1.3;
+    const fs=evGet('fspike');if(fs&&fs.ing===g.id)p*=1.25;
+    G.price[g.id]=p;});
+  const x=G.px;
+  x.xc+=-.010*x.xc+.006*gauss();x.xc=clamp(x.xc,-.25,.3);
+  x.xw+=-.008*x.xw+.008*gauss();x.xw=clamp(x.xw,-.3,.35);
+  let w=44*G.infl*seas(SEAS.w)*(1+x.xw+.35*x.xc),c=84*G.infl*seas(SEAS.c)*(1+x.xc);
+  if(evGet('fmd')){w*=.88;c*=.9}
+  if(evGet('bonus'))c*=1.06;
+  G.price.w=w;G.price.c=c;
+}
+
+/* ============ market listings ============ */
+function genListing(){
+  const bk=pick(Object.keys(BR)),r=Math.random(),sk=r<.3?'farm':r<.8?'auc':'trader',heavy=Math.random()<.2,light=!heavy&&Math.random()<.3;
+  const wt=heavy?RI(290,340):light?RI(140,185):RI(190,275),age=Math.round(heavy?R(12,16):light?R(4.5,6):R(6.5,10.5)+(wt-200)/40);
+  const f=(1+.0012*(240-wt))*BR[bk].pr*SRC[sk].pm*R(.97,1.03)*(heavy?.96:1);
+  const t=tierOf(),n=t<=1?RI(1,4)*5:t===2?RI(2,8)*5:t===3?RI(3,10)*10:RI(5,14)*10;
+  const dr=Math.random(),deal=dr<.12?'stress':dr<.2?'bargain':'';
+  const m0={id:Math.random().toString(36).slice(2),breed:bk,src:deal==='stress'?'trader':sk,n,wt,age,f:f*(deal==='stress'?.86:deal==='bargain'?.92:1),cv:deal==='stress'?.16:deal==='bargain'?.14:{farm:.07,auc:.10,trader:.14}[sk],exp:G.day+RI(14,28)};
+  if(deal==='stress'){m0.riskMul=1.3;m0.tag='Drought-stressed calves: cheap, but higher health risk'}
+  else if(deal==='bargain')m0.tag='Mixed-weight bargain lot: cheap, very uneven';
+  return m0;
+}
+function marketStep(force){
+  if(!force&&G.day%7)return;
+  G.market=G.market.filter(m=>m.exp>G.day);
+  let add=force?7:RI(1,3);while(add-->0&&G.market.length<9)G.market.push(genListing());
+  G.offers=(G.offers||[]).filter(o=>o.exp>G.day);
+  if(!force&&Math.random()<.4&&G.offers.length<3)G.offers.push(genContract());
+}
+const lotPrice=m=>m.f*G.price.w;
+
+/* ============ events ============ */
+function addEv(t,left,txt,k,extra){G.ev.push(Object.assign({t,left},extra||{}));if(t==='heat'||t==='cold')refillWeather();L(txt,k||'warn');toast(txt)}
+function eventsStep(){
+  G.ev.forEach(e=>e.left--);
+  const ended=G.ev.filter(e=>e.left<=0);
+  G.ev=G.ev.filter(e=>e.left>0);
+  ended.forEach(e=>{if(e.t==='fmd'){L('✅ FMD movement restrictions lifted. Buying and selling resume.','good');toast('FMD restrictions lifted')}});
+  const mo=month(),has=evGet;
+  const ek=G.day<30?1e-9:clamp(.3+capTotal()/150,.3,1),R2=()=>Math.random()/ek;
+  if(!has('heat')&&[10,11,0,1,2].includes(mo)&&R2()<.007)addEv('heat',RI(3,6),'🔥 Heatwave: extreme heat for several days. Watch heat stress.');
+  if(!has('cold')&&[4,5,6,7].includes(mo)&&R2()<.007)addEv('cold',RI(3,5),'❄️ Cold front with rain and frost: mud and cold stress.');
+  if(!has('drought')&&R2()<.0007)addEv('drought',120,'🌵 Drought: grain prices climbing for months.','bad');
+  if(!has('fspike')&&R2()<.002){const g=pick(ING);addEv('fspike',30,'📈 Supplier shortage: '+g.n+' +25% for a month.','warn',{ing:g.id})}
+  if(!has('load')&&R2()<.005)addEv('load',RI(2,4),G.upg.gen?'⚡ Load-shedding. Generator keeps the mixer running.':'⚡ Load-shedding: feed mixing disrupted, rations short.',G.upg.gen?'info':'warn');
+  if(!has('harvest')&&[3,4,5].includes(mo)&&R2()<.012)addEv('harvest',20,'🌽 Harvest special: maize and hominy −10% on orders of 10 t or more for three weeks.','good');
+  if(!has('bonus')&&R2()<.003)addEv('bonus',14,'💰 Abattoir demand spike: carcass prices +6% for two weeks.','good');
+  if(!has('fmd')&&R2()<.0007){addEv('fmd',RI(30,60),'🚫 FOOT-AND-MOUTH OUTBREAK: movement restrictions. No buying or selling until lifted. Cattle prices drop.','bad');G.pause='Foot-and-mouth disease outbreak nearby. Veterinary services have placed a movement ban. You cannot buy or sell cattle until it is lifted. Cattle keep eating, so watch pen finish weights and feed stocks.'}
+  if([11,0,1,2,3].includes(mo)&&R2()<.002){
+    let hit=0;G.pens.forEach((p,i)=>{const g=p.group;if(!g||g.vClo)return;const k=Math.max(1,Math.round(g.n*R(.06,.18)));
+      for(let j=0;j<k&&g.cases.length+g.chronic<g.n;j++)g.cases.push({k:'lsd',d:0,tx:0,txd:0,f:0});hit++;});
+    if(hit)L('🦠 Lumpy skin disease in the district: cases in '+hit+' unvaccinated pen(s).','bad');
+  }
+  if(R2()<.001){G.pens.forEach((p,i)=>{const g=p.group;if(!g||g.vClo||g.n<3)return;const k=Math.min(RI(1,3),Math.max(1,Math.floor(g.n/8)));g.n-=k;g.dead.clos=(g.dead.clos||0)+k;L('☠️ Clostridial sudden deaths in Pen '+(i+1)+': '+k+' head lost (unvaccinated).','bad')})}
+  if(R2()<.0012*(G.upg.fence?.25:1)){
+    const cand=G.pens.map((p,i)=>i).filter(i=>G.pens[i].group&&G.pens[i].group.n>3);
+    if(cand.length){const i=pick(cand),g=G.pens[i].group,k=Math.min(RI(1,3),Math.max(1,Math.floor(g.n/10)));g.n-=k;g.dead.theft=(g.dead.theft||0)+k;L('🚨 Stock theft: '+k+' head stolen from Pen '+(i+1)+'.','bad')}}
+  if(R2()<.004){const c=Math.round(RI(8,35)*100*(1+capTotal()/40)/100)*100;spend('maint',c);L('🔧 Equipment breakdown: repairs cost '+money(c)+'.')}
+  {const LD=G.land;
+    if(LD&&LD.status==='established'&&mo<=2&&R2()<.004){
+      LD.cells.forEach(c=>c.B*=R(.4,.7));addEv('worm',1,'🐛 Armyworm outbreak: the pasture has been stripped back hard. Biomass is down sharply.','bad');
+      if(LD.mix==='kik'&&LD.group){const g=LD.group,k=Math.max(1,Math.round(g.n*R(.1,.25)));for(let j=0;j<k&&g.cases.length+g.chronic<g.n;j++)g.cases.push({k:'kikuyu',d:0,tx:0,txd:0,f:0});L('☠️ Kikuyu poisoning after armyworm: '+k+' calves affected.','bad')}}}
+  if(G.day%60===0&&G.day>0){const d=pick([-.005,-.0025,0,0,.0025,.005]);if(d){G.rate=clamp(G.rate+d,.09,.17);L('🏦 Interest rate change: loan rate now '+(G.rate*100).toFixed(2)+'%.')}}
+}
+
+/* ============ animals ============ */
+function makeGroup(o){
+  const s=SRC[o.src];
+  return{breed:o.breed,src:o.src,n:o.n,n0:o.n,wt:o.wt*(1-s.shr),wt0:o.wt,shr:o.wt*s.shr,age0:o.age,dof:0,adapt:12,risk:s.risk*(o.riskMul||1),seed:Math.floor(Math.random()*1e6),
+    auto:true,slot:0,feedLevel:1,autoTx:true,cases:[],chronic:0,dead:{},withdraw:o.meta?28:0,wd:o.meta?[{n:o.n,d:28}]:[],
+    vClo:!!o.clo,vBRD:!!o.brd,dip:!!o.dip,imp:o.imp?120:0,meta:!!o.meta,
+    cost:{cattle:o.cattle,proc:o.proc,feed:0,vet:0,oh:0,int:0},dmKg:0,gainKg:0,acidExp:0,adgH:[],whist:[o.wt*(1-s.shr)],
+    ready:false,short:false,treatN:0,lastDMI:0,lastFeed:0,sold:0,worm:0,dipDays:o.dip?90:0,pastDays:0,onPasture:false,cv:o.cv||.08,bias:clamp(gauss()*.05,-.09,.09),bias2:clamp(gauss()*.08,-.15,.15),weighDay:-999};
+}
+const dirt=p=>clamp(p.manure/30,0,1);
+function totalHead(){return G.pens.reduce((a,p)=>a+(p.group?p.group.n:0),0)+(G.land&&G.land.group?G.land.group.n:0)}
+function acidRisk(g,r){
+  let k=clamp((r.st-g.adapt-6)/14,0,1)+.8*clamp((15-r.ndf)/8,0,1)+(g.short?.4:0);
+  if(r.prem>=1.5)k*=.8;
+  if(!G.upg.mixer)k*=1.1;
+  return clamp(k,0,1);
+}
+function stress(p,g){
+  const br=BR[g.breed],u=G.upg;
+  return{heat:G.w.heat*br.heat*(1-[0,.2,.4][u.shade])*(u.spr?.75:1),
+    cold:G.w.cold*(g.breed==='nguni'?.8:1)*(1+.5*p.mud),crowd:clamp((g.n-penCap())/(penCap()*.2),0,1.5)};
+}
+function dmiHead(p,g,r,s,acid){
+  let d=.105*Math.pow(g.wt,.75);
+  d*=1-.035*(r.me-11.5);
+  if(g.dof<14)d*=.55+.45*g.dof/14;
+  d*=1-.07*s.heat;d*=1-.10*p.mud;d*=1-.04*s.crowd;d*=1-.25*acid;d*=g.feedLevel;
+  const c=g.wt/BR[g.breed].fin;if(c>1.05)d*=1-.5*(c-1.05);
+  return Math.max(d,.5);
+}
+function adgHead(p,g,r,s,dmi){
+  const bw=g.wt,br=BR[g.breed];
+  const meIn=dmi*r.me;
+  const maint=.55*Math.pow(bw,.75)*(1+.12*s.cold+.05*s.heat+.06*p.mud+(g.onPasture?.08:0));
+  const sur=meIn-maint;let adg;
+  if(sur>=0){
+    const kg=.2+.025*r.me,eff=br.eff*(r.prem>=1.5?1.04:1);
+    adg=sur*kg*eff/(4+.036*bw);
+    const need=bw<300?14:bw<400?12.5:11.5;
+    adg*=clamp(.55+.45*r.cp/need,.6,1);
+    if(r.prem<.8)adg*=.93;
+    if(g.imp>0)adg*=1.08;if(g.dip)adg*=1.03;if(!G.upg.mixer&&!g.onPasture)adg*=.97;
+  }else adg=sur/28;
+  return adg;
+}
+function deaths(g,k,n){n=Math.min(n,g.n);if(n<=0)return;g.n-=n;g.dead[k]=(g.dead[k]||0)+n}
+function startTx(g,c){
+  const lvl=c.f>=1?2:1,cost=lvl===1?160:340;
+  if(!canPay(cost))return;
+  spend('vet',cost);g.cost.vet+=cost;g.treatN++;
+  c.tx=lvl;c.txd=lvl===1?3:5;g.withdraw=Math.max(g.withdraw,lvl===1?28:42);g.wd=g.wd||[];g.wd.push({n:1,d:lvl===1?28:42});
+}
+function healthStep(p,g,r,s,acid){
+  const br=BR[g.breed],u=G.upg;
+  let healthy=Math.max(0,g.n-g.cases.length-g.chronic);
+  const arr=Math.exp(-g.dof/10);
+  let risk=.0038*g.risk*br.brd*(.3+1.2*arr);
+  risk*=1+.8*p.mud+.5*s.heat+.4*s.cold+.8*s.crowd+.3*dirt(p)+(G.w.swing?.25:0)+.6*G.under;
+  if(g.vBRD)risk*=.7;if(g.meta&&g.dof<=10)risk*=.4;if(u.crush)risk*=.9;if(G.staff.stockmen)risk*=.9;
+  let nb=binom(healthy,risk);healthy-=nb;while(nb-->0)g.cases.push({k:'brd',d:0,tx:0,txd:0,f:0});
+  let na=binom(healthy,.012*acid*acid);healthy-=na;while(na-->0)g.cases.push({k:'acid',d:0,tx:0,txd:0,f:0});
+  g.acidExp=g.acidExp*.97+acid*.03;
+  if(s.heat>1.8)deaths(g,'heat',binom(healthy,.0015*(s.heat-1.8)*(g.wt/450)));
+  const ur=r.urea;
+  if(ur>1.5||(g.dof<14&&ur>.5)){const pd=(ur>1.5?.004*(ur-1.5)/.5:0)+(g.dof<14&&ur>.5?.003*(ur-.5):0);deaths(g,'urea',binom(healthy,pd))}
+  deaths(g,'other',binom(healthy,.00004));
+  const det=clamp(.45+(G.staff.stockmen?.35:0)+(u.hosp?.1:0)-.3*G.under,.15,.97);
+  const pS=(lvl,c)=>clamp((lvl===1?.72:.8)+(u.hosp?.08:0)+(G.staff.vet?.07:0)+(c.d<=1?.05:0),0,.95);
+  for(let i=g.cases.length-1;i>=0;i--){
+    const c=g.cases[i];c.d++;
+    if(c.tx===0){
+      if(g.autoTx&&Math.random()<det)startTx(g,c);
+      if(c.tx===0){
+        const pm=(c.k==='acid'?.05:c.k==='lsd'?.01:.035)*(c.d>1?1:.4);
+        if(Math.random()<pm){g.cases.splice(i,1);g.n--;g.dead[c.k]=(g.dead[c.k]||0)+1;continue}
+        if(c.d>8&&Math.random()<.06){g.cases.splice(i,1);if(Math.random()<.4)g.chronic++;continue}
+      }
+    }else{
+      if(Math.random()<.005){g.cases.splice(i,1);g.n--;g.dead[c.k]=(g.dead[c.k]||0)+1;continue}
+      if(--c.txd<=0){
+        if(Math.random()<pS(c.tx,c))g.cases.splice(i,1);
+        else{c.f++;c.tx=0;c.d=0;if(c.f>=2){g.cases.splice(i,1);if(Math.random()<.5){g.n--;g.dead[c.k]=(g.dead[c.k]||0)+1}else g.chronic++}}
+      }
+    }
+  }
+  g.chronic=Math.min(g.chronic,Math.max(0,g.n-g.cases.length));
+  if(g.wd){g.wd.forEach(w=>w.d--);g.wd=g.wd.filter(w=>w.d>0)}
+  g.withdraw=g.wd?g.wd.reduce((a,w)=>Math.max(a,w.d),0):0;
+}
+
+/* ============ one day ============ */
+function stepDay(){
+  G.day++;G.t+=864e5;
+  receiveOrders();
+  if(G.permitDue&&!G.upg.permit&&G.day>=G.permitDue){G.upg.permit=1;L('📜 Environmental & water-use authorisation approved. You may now expand beyond 500 head.','good')}
+  weatherStep();priceStep();eventsStep();marketStep();
+  const head=totalHead(),wl=workload();G.wl=wl;
+  G.under=wl.req>wl.cap?clamp((wl.req-wl.cap)/wl.req,0,1):0;
+  const waste=[.05,.03,.02,.01][G.upg.mixer||0],plans=[],demand=new Array(ING.length).fill(0);
+  G.pens.forEach((p,i)=>{
+    const g=p.group;if(!g)return;
+    const slot=slotFor(g),r=rcalc(G.rations[slot].p),s=stress(p,g),acid=acidRisk(g,r);
+    const nH=Math.max(0,g.n-g.cases.length-g.chronic),eq=nH+.4*g.cases.length+.85*g.chronic;
+    const dmi=dmiHead(p,g,r,s,acid),asfed=dmi*eq/r.dm*(1+waste);
+    plans.push({i,p,g,slot,r,s,acid,dmi,asfed,nH});
+    r.norm.forEach((f,k)=>demand[k]+=asfed*f);
+  });
+  const lp=lickPlan(demand);
+  ING.forEach((g,k)=>G.demand[g.id]=demand[k]);
+  if(G.autoBuy)autoBuy(demand);
+  const ratio=ING.map((g,k)=>demand[k]>0?Math.min(1,G.stock[g.id].kg/demand[k]):1);
+  const power=evGet('load')&&!G.upg.gen?.7:1;
+  const out=[];
+  plans.forEach(pl=>{
+    const{p,g,r,s,acid}=pl;
+    let av=1;r.norm.forEach((f,k)=>{if(f>0)av=Math.min(av,ratio[k])});av*=power;
+    g.short=av<.95;if(g.short&&G.day%3===0)out.push(pl.i);
+    let cost=0;
+    r.norm.forEach((f,k)=>{const kg=pl.asfed*f*av,st=G.stock[ING[k].id];st.kg=Math.max(0,st.kg-kg);cost+=kg/1000*st.cost});
+    g.cost.feed+=cost;g.lastFeed=cost;
+    const dmi=pl.dmi*av,dmTot=pl.asfed*av*r.dm/(1+waste);
+    g.dmKg+=dmTot;g.lastDMI=g.n?dmTot/g.n:0;
+    // growth
+    const adg=adgHead(p,g,r,s,dmi);
+    const nS=g.cases.length,nC=g.chronic,nH=Math.max(0,g.n-nS-nC);
+    const avg=g.n?(nH*adg+nC*adg*.6+nS*-.25)/g.n:0;
+    const rec=g.shr*.2;g.shr-=rec;
+    g.wt=Math.max(100,g.wt+avg+rec);g.gainKg+=Math.max(0,avg)*g.n;
+    g.adgH.push(avg);if(g.adgH.length>14)g.adgH.shift();
+    if(r.st>g.adapt)g.adapt=Math.min(r.st,g.adapt+1.5);else g.adapt=Math.max(r.st,g.adapt-3);
+    g.dof++;if(g.imp>0)g.imp--;
+    if(g.dof%3===0){g.whist.push(g.wt);if(g.whist.length>120)g.whist.shift()}
+    healthStep(p,g,r,s,acid);
+    // overhead alloc & notional interest
+    const ohHead=(G.staff.workers*WAGE+G.staff.stockmen*STOCKMAN+(G.staff.vet?VET:0)+fixedMonthly())/30/Math.max(1,head)+3.5;
+    g.cost.oh+=ohHead*g.n;
+    g.cost.int+=(g.cost.cattle+g.cost.proc+g.cost.feed+g.cost.vet)*.115/365;
+    if(!g.ready&&g.n>0&&shownWt(g)/BR[g.breed].fin>=.9){g.ready=true;L('✅ Pen '+(pl.i+1)+' looks close to target finish ('+Math.round(shownWt(g))+' kg avg'+(G.upg.crush?'':', estimated')+').','good');toast('Pen '+(pl.i+1)+' nearly market-ready')}
+    if(g.n<=0){L('Pen '+(pl.i+1)+' lost all its cattle.','bad');p.group=null;SP[pl.i]=[]}
+  });
+  let lickAv=1;
+  if(lp){lp.r.norm.forEach((f,k)=>{if(f>0)lickAv=Math.min(lickAv,ratio[k])});lickAv*=power;
+    let lc=0;lp.r.norm.forEach((f,k)=>{const kg=lp.asfed*f*lickAv,st=G.stock[ING[k].id];st.kg=Math.max(0,st.kg-kg);lc+=kg/1000*st.cost});
+    if(G.land.group)G.land.group.cost.feed+=lc}
+  pastureStep(lickAv);
+  if(out.length)L('⚠️ Feed shortage in pen(s) '+out.map(i=>i+1).join(', ')+': cattle not getting full rations. Buy feed!','bad');
+  // pens: mud, manure
+  G.pens.forEach((p,i)=>{
+    if(!p.built)return;
+    const n=p.group?p.group.n:0;
+    p.manure+=n*.006;
+    const dr=[1,.75,.5,.3][G.upg.drain||0];
+    p.mud+=G.w.rain*.014*dr*(.7+.5*n/penCap());
+    if(G.w.rain<1)p.mud-=.05*(1+(G.w.tmax>25?.4:0));
+    p.mud=clamp(p.mud,dirt(p)*.3,1);
+    if(G.autoScrape&&p.manure>25)scrape(i,true);
+  });
+  // finances
+  const hd=totalHead();
+  if(hd){const u=hd*3.5;spend('utilities',u)}
+  if(G.loan>0)spend('interest',G.loan*(G.rate+LSPREAD[tierOf()])/365);
+  if(G.cash<0)spend('interest',-G.cash*(G.rate+SPREAD[tierOf()])/365);
+  const d=new Date(G.t);
+  if(d.getUTCDate()===1){
+    const w=G.staff.workers*WAGE+G.staff.stockmen*STOCKMAN,v=G.staff.vet?VET:0,f=Math.round(fixedMonthly());
+    spend('wages',w);if(v)spend('vet',v);spend('maint',f);
+    if(G.land.lease)spend('pasture',Math.round(G.land.lease*250*G.infl));
+    G.fin.prev=G.fin.cur;G.fin.cur={o:{},i:{}};
+    L('📅 Month end: wages '+money(w+v)+', overheads '+money(f)+' paid.');
+  }
+  if(G.day%2===0){const h=G.hist;h.cash.push(G.cash-G.loan);h.w.push(G.price.w);h.c.push(G.price.c);h.maize.push(G.price.maize);
+    ['cash','w','c','maize'].forEach(k=>{if(h[k].length>300)h[k].shift()})}
+  G.nwc=netWorth().total;updateTier();checkGoals();contractStep();
+  if(G.day%365===0&&G.day>0){makeReview();G.pendingReview=true}
+  if(G.cash<-LIMIT_F()){G.over=true;G.pause='The bank has called in your overdraft. Your cash fell below −'+money(LIMIT_F())+' and the feedlot has been placed under business rescue. Game over.'}
+  save();
+}
+function onOrder(id){return G.orders.reduce((a,o)=>o.id===id?a+o.kg:a,0)}
+function storeUsed(){return ING.reduce((a,g)=>a+G.stock[g.id].kg+onOrder(g.id),0)}
+function autoBuy(demand){
+  const cap=SILO[G.upg.silo||0]*1000;let used=storeUsed();
+  ING.forEach((g,k)=>{
+    const dem=demand[k];if(dem<=0)return;
+    const have=G.stock[g.id].kg+onOrder(g.id);if(have/dem>=G.minCover)return;
+    let want=Math.min(dem*G.tgtCover-have,cap-used);want=Math.min(cap-used,Math.ceil(want/100)*100);if(want<=0)return;
+    const cost=want/1000*feedPrice(g.id,want);if(!canPay(cost))return;
+    buyFeed(g.id,want);used+=want;
+  });
+}
+function feedPrice(id,kg){
+  const f=G.fwd&&G.fwd[id];let p=f&&f.until>=G.day?f.p:G.price[id];
+  if(evGet('harvest')&&(id==='maize'||id==='hominy')&&kg>=10000)p*=.9;
+  return p*feedFactor(kg);
+}
+function buyFeed(id,kg){
+  const p=feedPrice(id,kg);
+  spend('feed',kg/1000*p);G.orders.push({id,kg,p,due:G.day+feedLead(kg)});
+}
+function receiveOrders(){
+  G.orders=G.orders.filter(o=>{if(o.due>G.day)return true;const st=G.stock[o.id];st.cost=(st.kg*st.cost+o.kg*o.p)/(st.kg+o.kg);st.kg+=o.kg;return false});
+}
+function scrape(i,auto){
+  const p=G.pens[i],t=p.manure;if(t<=0)return;
+  const c=t*40,r=t*110;spend('maint',c);earn('manure',r);p.manure=0;p.mud=Math.max(0,p.mud-.15);
+  if(!auto)toast('Pen '+(i+1)+' scraped: '+num(t,1)+' t manure sold')
+}
+
+/* ============ appraisal & sale ============ */
+function carcassOf(g,w,chr,rnd){
+  const br=BR[g.breed],c=w/br.fin,fat=clamp(Math.round(1+(c-.72)/.11),1,5);
+  const am=g.age0+totDays(g)/30.4+(rnd?R(-1.5,1.5):0),ac=am<=21?'A':am<=28?'AB':am<=40?'B':'C';
+  const dr=clamp(br.dr+6*(c-.94),50,59.5);let carc=w*dr/100*.975;
+  let price=G.price.c*({A:1,AB:.94,B:.88,C:.8}[ac])*[0,.9,.99,1,.96,.9][fat]*br.cp;
+  if(carc<190)price*=.93;if(chr)price*=.85;
+  const pl=.03+.35*g.acidExp,liver=rnd?(Math.random()<pl?280:0):pl*280;
+  return{w,carc,fat,ac,dr,rev:carc*price-liver};
+}
+function appraise(g,rnd){
+  const nTot=g.n,nC=Math.min(g.chronic,nTot),nH=nTot-nC;
+  const o={n:nTot,live:0,carc:0,rev:0,fat:[0,0,0,0,0,0],age:{A:0,AB:0,B:0,C:0},dr:0,items:[]};
+  const m=rnd?nH:Math.min(nH,11),sc=m?nH/m:0;
+  const add=(it,wt,chr)=>{o.items.push({fat:it.fat,carc:it.carc,ac:it.ac,rev:it.rev,sc:wt,chr:!!chr});o.live+=it.w*wt;o.carc+=it.carc*wt;o.rev+=it.rev*wt;o.fat[it.fat]+=wt;o.age[it.ac]+=wt;o.dr+=it.dr*wt};
+  for(let j=0;j<m;j++){const z=rnd?gauss():((j+.5)/m-.5)*3.4;add(carcassOf(g,g.wt*(1+(g.cv||.08)*z),false,rnd),sc)}
+  if(nC)add(carcassOf(g,g.wt*.88,true,rnd),nC,true);
+  const n=Math.max(1,nTot);
+  const res=Object.assign(o,{liveAvg:o.live/n,carcAvg:o.carc/n,drAvg:o.dr/n,
+    cost:g.cost.cattle+g.cost.proc+g.cost.feed+g.cost.vet+(g.cost.pas||0)+g.cost.oh+g.cost.int});
+  res.q={};['abattoir','butcher','auction'].forEach(c=>res.q[c]=quote(res,c,rnd));
+  if(G.contracts&&G.contracts.length){
+    let bc=null;
+    G.contracts.forEach(c=>{const rem=c.n-c.done;if(rem<=0)return;let qn=0,qrev=0;
+      res.items.forEach(it=>{if(!it.chr&&it.fat>=c.fmin&&it.fat<=c.fmax&&it.carc>=c.minCarc&&it.ac==='A'){qn+=it.sc;qrev+=it.rev*it.sc}});
+      if(qn<=0)return;const take=Math.min(qn,rem),bonus=qrev*(take/qn)*c.prem;if(!bc||bonus>bc.bonus)bc={c,take,bonus}});
+    if(bc&&Math.floor(bc.take)>=1){const ab=res.q.abattoir;
+      res.q.contract={ok:true,gross:ab.gross+bc.bonus,cost:ab.cost,net:ab.gross+bc.bonus-ab.cost,ctId:bc.c.id,take:Math.floor(bc.take),
+        note:'Delivers '+Math.floor(bc.take)+' qualifying head to '+bc.c.buyer+' at +'+num(bc.c.prem*100,1)+'% on those animals. Spec: carcass ≥'+bc.c.minCarc+' kg, fat code '+bc.c.fmin+'–'+bc.c.fmax+', age class A.'}}
+  }
+  let best='abattoir';['butcher','auction','contract'].forEach(c=>{const x=res.q[c];if(x&&x.ok&&x.net>res.q[best].net)best=c});
+  res.best=best;res.net=res.q[best].net;res.trans=res.q[best].cost;res.comm=0;
+  return res;
+}
+function quote(a,ch,rnd){
+  const n=a.n,Pc=G.price.c;
+  if(ch==='butcher'){
+    if(n>15)return{ok:false,why:'A local butcher takes 15 head at most.',net:0,cost:0};
+    const gross=a.carc*Pc*.90,cost=700*Math.ceil(n/6);
+    return{ok:true,gross,cost,net:gross-cost,note:'Flat price that ignores fat code and grade. Bakkie trips R700 each (6 head).'};
+  }
+  if(ch==='auction'){
+    const gross=a.carc*Pc*.88*(rnd?R(.92,1.08):1),cost=gross*.05+70*n+haulCost(n);
+    return{ok:true,gross,cost,net:gross-cost,note:'Price swings ±8% on the day. 5% commission, R70 per head and haulage.'};
+  }
+  const gross=a.rev*(n>=30?1.02:1),cost=haulCost(n)+gross*.015;
+  return{ok:true,gross,cost,net:gross-cost,note:n>=30?'Full-load premium +2%. Grade and fat code pay in full.':'Part load: you pay for the whole truck (R9 500 per 30 head). Grade and fat code pay in full.'};
+}
+function heldCount(g){
+  const wd=(g.wd||[]).reduce((a,w)=>a+w.n,0),tx=g.cases.filter(c=>c.tx).length;
+  return Math.min(g.n,g.cases.length+Math.max(0,wd-tx));
+}
+function saleGroup(g){
+  const held=heldCount(g);if(!held)return g;
+  const share=(g.n-held)/g.n,cost={};for(const k in g.cost)cost[k]=g.cost[k]*share;
+  return Object.assign({},g,{n:g.n-held,cases:[],chronic:Math.min(g.chronic,g.n-held),cost,gainKg:g.gainKg*share,dmKg:g.dmKg*share});
+}
+function blocked(g){
+  if(evGet('fmd'))return'Foot-and-mouth movement ban in force.';
+  if(g.n-heldCount(g)<=0)return'Every animal left is sick or in its antibiotic withdrawal period (up to '+g.withdraw+' more days).';
+  return'';
+}
+const CHN={contract:'Contract delivery',abattoir:'Abattoir',butcher:'Local butcher',auction:'Auction'};
+function sell(i,ch){
+  const p=G.pens[i],g=p.group;if(!g||blocked(g))return;
+  const held=heldCount(g),gs=saleGroup(g),share=gs.n/g.n;
+  const a=appraise(gs,true);ch=ch||a.best;const q=a.q[ch];if(!q||!q.ok)return;
+  const profit=q.net-a.cost;
+  earn('sales',q.net);G.nLots=(G.nLots||0)+1;if(profit>0)G.nGood=(G.nGood||0)+1;
+  if(ch==='contract'){const ct=G.contracts.find(x=>x.id===q.ctId);
+    if(ct){ct.done+=q.take;L('📑 Delivered '+q.take+' head to '+ct.buyer+' ('+ct.done+'/'+ct.n+').','good');
+      if(ct.done>=ct.n){G.ctDone=(G.ctDone||0)+1;G.contracts=G.contracts.filter(x=>x!==ct);L('✅ Contract with '+ct.buyer+' fulfilled.','good');toast('Contract fulfilled')}}}
+  const fatGood=(a.fat[2]+a.fat[3])/Math.max(1,a.n);
+  const nIn=Math.max(gs.n,Math.round(g.n0*share)),rec={day:G.day,t:G.t,pen:i+1,breed:g.breed,nIn,nOut:gs.n,dof:totDays(g),w0:g.wt0,w1:a.liveAvg,
+    adg:(a.liveAvg-g.wt0*(1-SRC[g.src].shr))/Math.max(1,totDays(g)),fcr:g.gainKg>0?g.dmKg/g.gainKg:0,
+    mort:1-gs.n/nIn,dr:a.drAvg,fatGood,rev:q.net,ch,cost:a.cost,profit,ppk:profit/Math.max(1,gs.n),carc:a.carcAvg,
+    cog:g.gainKg>0?(g.cost.feed+g.cost.vet)/g.gainKg:0,breakdown:Object.assign({},gs.cost,{trans:q.cost}),grass:g.pastDays||0,fat:a.fat.slice(),age:Object.assign({},a.age)};
+  G.sold.unshift(rec);if(G.sold.length>60)G.sold.pop();
+  L('💵 Sold '+(held?'part of ':'')+'Pen '+(i+1)+' to '+CHN[ch].toLowerCase()+': '+gs.n+' head, '+money(q.net)+', profit '+money(profit)+' ('+money(rec.ppk)+'/hd).',profit>=0?'good':'bad');
+  if(held){
+    const keep=1-share;for(const k in g.cost)g.cost[k]*=keep;g.gainKg*=keep;g.dmKg*=keep;
+    g.chronic-=gs.chronic;g.n=held;g.n0=Math.max(held,Math.round(g.n0*keep));g.ready=false;
+    g.wd=(g.wd||[]).map(w=>({n:Math.min(w.n,held),d:w.d}));
+  }else{p.group=null;SP[i]=[];if(p.manure>0)scrape(i,true)}
+  checkGoals();
+  ui.modal=false;openModal(soldHTML(rec));
+}
+function cull(i){
+  const p=G.pens[i],g=p.group;if(!g||g.chronic<=0||blocked(g))return;
+  const k=g.chronic,rev=k*g.wt*.88*G.price.w*.65;
+  earn('sales',rev);g.n-=k;g.chronic=0;L('Culled '+k+' chronic poor-doers from Pen '+(i+1)+' for '+money(rev)+'.');toast('Culled '+k+' head: '+money(rev));
+  if(g.n<=0){p.group=null;SP[i]=[]}
+}
+
+
+/* ============ pasture ============ */
+const BRES=1100,BREADY=2400,BOVER=4000;
+const landHa=()=>G.land.own+G.land.lease;
+const mixOf=()=>MIX.find(m=>m.id===G.land.mix);
+const landPrice=()=>Math.round(45000*G.infl/500)*500;
+const perimLen=ha=>4*Math.sqrt(Math.max(ha,.01)*10000);
+const totDays=g=>g.dof+(g.pastDays||0);
+const pastureMaxHead=()=>Math.max(1,Math.floor(landHa()*20));
+function peqCost(e,lv){
+  const ha=Math.max(landHa(),1);
+  if(e.id==='perim'){const prev=lv>0?e.lv[lv-1]:0;return Math.round((e.lv[lv]-prev)*perimLen(ha)/100)*100}
+  if(e.id==='pwater'&&lv===1)return Math.round(Math.max(15000,12000*ha)/500)*500;
+  if(e.id==='irr')return Math.round((e.base[lv]+e.perha[lv]*ha)/500)*500;
+  return e.lv[lv];
+}
+function maxCells(){return G.upg.en>=1?KITMAX[G.upg.kit||0]:1}
+function setCells(N){
+  const LD=G.land,old=LD.cells;N=Math.max(1,Math.round(N));
+  const avgB=old.length?old.reduce((a,c)=>a+c.B,0)/old.length:0,avgA=old.length?old.reduce((a,c)=>a+c.age,0)/old.length:30;
+  LD.N=N;LD.cells=[];
+  for(let i=0;i<N;i++){const o=old.length?old[i%old.length]:null;LD.cells.push({B:o?o.B:avgB,age:o?Math.round(o.age):Math.round(avgA)})}
+  LD.active=Math.min(LD.active,N-1);LD.dic=0;
+}
+function seasonCurve(mix){const d=new Date(G.t),m=d.getUTCMonth(),f=(d.getUTCDate()-1)/30;return mix.curve[m]*(1-f)+mix.curve[(m+1)%12]*f}
+function growthMid(){
+  const LD=G.land,mix=mixOf();if(!mix)return 1;
+  return Math.max(1,seasonCurve(mix)*.85*Math.max(.3,LD.stand)*LD.fit*(1+LD.fert)*(1+.6*LD.cl)*(1-(BRES+BREADY)/2/mix.K));
+}
+function restTarget(){return clamp((BREADY-BRES)/growthMid(),18,150)}
+function recDays(){
+  const LD=G.land,g=LD.group,rest=restTarget(),byRest=LD.N>1?rest/(LD.N-1):14;
+  let bySupply=14;
+  if(g){const dem=Math.max(.5,g.n*.026*g.wt),sup=(BREADY-BRES)*(landHa()/LD.N)*.65;bySupply=sup/dem}
+  return{d:clamp(Math.round(Math.min(byRest,bySupply)),1,14),byRest,bySupply,rest};
+}
+function moveEvery(){return G.land.moveAuto?recDays().d:G.land.moveDays}
+function cellState(c){
+  const LD=G.land,mix=mixOf();
+  if(!mix||c.B<500&&LD.status!=='established')return'bare';
+  const dorm=(mix.id==='kik'&&[5,6,7].includes(month()))||LD.stand<.35;
+  if(c.age<5&&c.B<BRES+600)return'graze';
+  if(c.B>=BOVER)return'over';
+  if(c.B<500)return'bare';
+  if(dorm)return'dorm';
+  return c.B>=BREADY?'ready':'grow';
+}
+function forageQ(B){
+  const LD=G.land,mix=mixOf(),m=clamp((B-1400)/4000,0,1);
+  let me=mix.me[0]+(mix.me[1]-mix.me[0])*m+1.5*LD.cl+.4,cp=mix.cp[0]+(mix.cp[1]-mix.cp[0])*m+25*LD.cl;
+  if(mix.id==='kik'&&[5,6,7].includes(month())){me*=.88;cp*=.65}
+  return{me,cp,m};
+}
+function pstress(g){const br=BR[g.breed];return{heat:G.w.heat*br.heat*(G.upg.pshade?.75:1),cold:G.w.cold*(g.breed==='nguni'?.8:1)*1.1,crowd:0}}
+function addPasCost(a){const g=G.land.group;if(g)g.cost.pas=(g.cost.pas||0)+a}
+function lickPlan(demand){
+  const LD=G.land,g=LD.group;if(!g||LD.lick<=0)return null;
+  const r=rcalc(G.rations[LD.lickSlot].p),waste=[.05,.03,.02,.01][G.upg.mixer||0],asfed=LD.lick*g.n*(1+waste);
+  r.norm.forEach((f,k)=>demand[k]+=asfed*f);return{asfed,r};
+}
+function nextCell(){
+  const LD=G.land,N=LD.N;if(N<2)return 0;
+  let best=-1,bestB=-1;
+  for(let k=1;k<N;k++){const i=(LD.active+k)%N,c=LD.cells[i];if(c.B>=BREADY*.9)return i;if(c.B>bestB){bestB=c.B;best=i}}
+  return best;
+}
+function advanceCell(){
+  const LD=G.land;if(LD.N<2){LD.dic=0;return}
+  const old=LD.active,i=nextCell(),c=LD.cells[i],ready=c.B>=BREADY*.9;
+  LD.cells[old].age=0;
+  if(!ready){LD.pressure=(LD.pressure||0)+1;if(c.age<restTarget()*.6)LD.stand=Math.max(0,LD.stand-.01);
+    if(LD.pressure===1)L('⚠️ No strip is ready: the mob went onto one that has not recovered. Add strips, move fewer calves or lengthen the rest.','warn')}
+  else LD.pressure=0;
+  LD.active=i;LD.dic=0;
+}
+function pastureStep(lickAv){
+  const LD=G.land,w=G.w,mix=mixOf();
+  LD.sw=clamp(LD.sw+w.rain/40-(.008+.0009*Math.max(0,w.tmax-12)),0,1);
+  if(!mix||LD.status==='none')return;
+  if(G.upg.irr&&LD.autoIrr&&LD.sw<.35&&LD.status!=='spent'){const c=Math.round(landHa()*(G.upg.irr===1?900:600));if(canPay(c)){spend('pasture',c);addPasCost(c);LD.sw=.7}}
+  const seepF=landHa()?LD.seep/landHa():0,swE=Math.max(LD.sw,.6*seepF);
+  let moistF=.15+.85*clamp(swE/.5,0,1);if(mix.wet&&!G.upg.irr&&seepF<.5)moistF*=.6;
+  const mo=month(),curve=seasonCurve(mix),tf=w.tmin<0?mix.frost:1,hf=w.tmax>30?mix.heat:1;
+  if(mix.id==='rye'&&mo<=1)LD.stand*=.96;
+  if(mix.id==='teff'&&((mo>=4&&mo<=7)||w.tmin<0))LD.stand*=w.tmin<0?.8:.93;
+  if(mix.ann&&LD.stand<.12&&LD.status!=='spent'){LD.status='spent';L('🍂 The '+mix.n+' has finished for the season. Replant to keep grazing.','warn')}
+  const since=G.day-LD.plantDay,estF=since<mix.est?clamp(since/mix.est,.1,1):1;
+  LD.fert*=.97;
+  const g=LD.group;
+  LD.cells.forEach((c,i)=>{
+    const rf=.4+.6*Math.min(1,c.B/700);
+    c.B+=curve*moistF*tf*hf*LD.stand*LD.fit*estF*(1+LD.fert)*(1+.6*LD.cl)*Math.max(0,1-c.B/mix.K)*rf;
+    c.age=(g&&i===LD.active&&LD.status==='established')?0:c.age+1;
+  });
+  if(LD.status==='establishing'&&since>=mix.est){const aB=LD.cells.reduce((a,c)=>a+c.B,0)/LD.cells.length;if(aB>=1800){LD.status='established';L('🌱 Pasture established: strips are tall enough to graze. You can put calves on it now.','good')}}
+  const clT=mix.cl*(LD.fert>.15?.6:1)*(LD.pressure?.6:1);LD.cl+=(clT-LD.cl)*.01;
+  if(!mix.ann&&!LD.pressure)LD.stand=Math.min(1,LD.stand+.0008);
+  if(g&&LD.status!=='planted'&&LD.status!=='none')grazeDay(g,lickAv);
+  if(G.day%2===0){LD.hist.push(LD.cells.reduce((a,c)=>a+c.B,0)/LD.cells.length);if(LD.hist.length>150)LD.hist.shift()}
+}
+function grazeDay(g,av){
+  const LD=G.land,mix=mixOf(),cell=LD.cells[LD.active],aHa=landHa()/LD.N;
+  const nS=g.cases.length,nC=g.chronic,nH=Math.max(0,g.n-nS-nC),eq=nH+.4*nS+.85*nC;
+  const pp={mud:.1+(LD.sw>.9?.25:0),manure:2},s=pstress(g),q=forageQ(cell.B),lr=rcalc(G.rations[LD.lickSlot].p);
+  const lickDM=LD.lick*lr.dm*av;
+  const dpot=.105*Math.pow(g.wt,.75)*clamp(.85+.04*(q.me-8),.75,1.08)*(1-.07*s.heat)*(1-.1*pp.mud)*(G.upg.pwater>=2?1.03:1);
+  const need=Math.max(0,dpot-.6*lickDM)*eq,avail=Math.max(0,cell.B-BRES)*aHa*.65,Ef=Math.min(need,avail);
+  cell.B=Math.max(BRES*.4,cell.B-Ef*1.25/aHa);
+  const fHd=eq?Ef/eq:0,dmi=fHd+lickDM;
+  const me=(fHd*q.me+lickDM*lr.me)/Math.max(.1,dmi),cp=(fHd*q.cp+lickDM*lr.cp)/Math.max(.1,dmi);
+  let adg=adgHead({mud:pp.mud},g,{me,cp,prem:LD.lick>.2?1.2:.5,urea:0,dm:1},s,dmi)*(1-.2*(g.worm||0));
+  // fence breakouts
+  const perim=G.upg.perim,esc=perim?[.012,.004,.0004][perim-1]+(landHa()>ENHA[G.upg.en||0]?.03:0):.2;
+  if(Math.random()<esc){adg=Math.min(adg,0);if(G.day%2===0)L('🚧 Calves broke through the fence and lost a day of grazing.','warn')}
+  const avg=g.n?(nH*adg+nC*adg*.6+nS*-.25)/g.n:0,rec=g.shr*.2;g.shr-=rec;
+  g.wt=Math.max(80,g.wt+avg+rec);g.gainKg+=Math.max(0,avg)*g.n;g.adgH.push(avg);if(g.adgH.length>14)g.adgH.shift();
+  g.dmKg+=dmi*eq;g.lastDMI=dmi;g.lastDiet={me,cp,forage:fHd,lick:lickDM,alloc:eq?avail/eq:0};
+  g.adapt=Math.max(6,g.adapt-3);g.dof++;if(g.imp>0)g.imp--;if(g.dipDays>0)g.dipDays--;
+  if(g.dof%3===0){g.whist.push(g.wt);if(g.whist.length>120)g.whist.shift()}
+  g.short=Ef<need*.6;
+  g.worm=clamp((g.worm||0)+.004*(g.dipDays>0?.4:1)*(LD.pressure?1.6:1),0,1);
+  healthStep(pp,g,{urea:0},s,0);
+  if(g.n>0){
+    const healthy=Math.max(0,g.n-g.cases.length-g.chronic),lush=clamp(1-q.m*1.6,0,1);
+    const pb=.0006*mix.bl*(LD.cl/.25)*lush*(LD.lick>.3?.6:1)*(g.dof<10?1.4:1)*(G.w.rain>2?1.4:1);
+    let nb=binom(healthy,pb);while(nb-->0){if(Math.random()<.3)deaths(g,'bloat',1);else g.cases.push({k:'bloat',d:0,tx:0,txd:0,f:0})}
+    if([9,10,11,0,1,2,3].includes(month())){let nt=binom(Math.max(0,g.n-g.cases.length-g.chronic),.0004*(g.dipDays>0?.3:1)*(LD.pressure?1.3:1));while(nt-->0)g.cases.push({k:'tick',d:0,tx:0,txd:0,f:0})}
+  }
+  if(g.n<=0){L('The calves on the pasture were all lost.','bad');LD.group=null;SP[8]=[];return}
+  // cost allocation
+  const rent=LD.lease*250*G.infl/30,landInt=LD.own*landPrice()*G.rate/365,dep=LD.equip*.08/365,seed=LD.plantCost/(mix.ann?240:900);
+  g.cost.pas=(g.cost.pas||0)+rent+landInt+dep+seed;
+  const ohHead=(G.staff.workers*WAGE+G.staff.stockmen*STOCKMAN+(G.staff.vet?VET:0)+fixedMonthly())/30/Math.max(1,totalHead())+3.5;
+  g.cost.oh+=ohHead*g.n;g.cost.int+=(g.cost.cattle+g.cost.proc+g.cost.feed+g.cost.vet+(g.cost.pas||0))*.115/365;
+  if(!g.ready&&shownWt(g)>=300){g.ready=true;L('✅ Calves on pasture look about 300 kg: a good time to move them into a pen for finishing.','good');toast('Calves ready to move to a pen')}
+  // moving
+  LD.dic++;
+  const left=Math.max(0,cell.B-BRES)*aHa*.65,eatenOut=left<.2*need;
+  if(LD.dic>=moveEvery()||(LD.early&&eatenOut&&LD.dic>=1))advanceCell();
+  else if(LD.N===1&&cell.B<BRES*.9)LD.stand=Math.max(0,LD.stand-.003);
+}
+function plantPasture(id){
+  const LD=G.land,mix=MIX.find(m=>m.id===id),ha=landHa();
+  if(!mix||!ha){toast('Get some land first');return}
+  if(!G.upg.perim){toast('Build a perimeter fence first');return}
+  if(LD.group){toast('Move the calves off before replanting');return}
+  const cost=mix.cost*ha;if(!canPay(cost)){toast('Not enough credit');return}
+  spend('pasture',cost);
+  const inWin=mix.win.includes(month());
+  Object.assign(LD,{mix:id,status:'establishing',plantDay:G.day,plantCost:cost,fit:inWin?1:.55,stand:1,cl:mix.cl*.5,fert:0,active:0,dic:0,pressure:0,hist:[]});
+  if(!LD.cells.length)setCells(1);
+  LD.cells.forEach(c=>{c.B=0;c.age=30});
+  L('🌱 Planted '+mix.n+' on '+ha+' ha for '+money(cost)+'.'+(inWin?'':' Out of season, so establishment will be poor.'),inWin?'good':'warn');
+}
+function buyLand(kind){
+  const LD=G.land,t=tierOf();
+  if(landHa()+1>LANDMAX[t]){toast('Tier '+t+' allows up to '+LANDMAX[t]+' ha');return}
+  const oldHa=landHa(),addLen=perimLen(oldHa+1)-perimLen(oldHa),rate=G.upg.perim?PEQ[0].lv[G.upg.perim-1]:0,fence=Math.round(addLen*rate/100)*100;
+  const mix=mixOf(),plant=LD.status!=='none'&&mix?mix.cost:0,lp=kind==='seep'?Math.round(landPrice()*1.3/500)*500:kind==='buy'?landPrice():0,c=lp+fence+plant;
+  if(!canPay(c)){toast('Not enough credit');return}
+  if(kind==='seep'){LD.seep++;LD.own++}else if(kind==='buy')LD.own++;else LD.lease++;
+  if(lp)spend('capex',lp);
+  if(fence){spend('capex',fence);LD.equip+=fence}
+  if(plant){spend('pasture',plant);LD.plantCost+=plant;LD.cells.forEach(cc=>cc.B*=oldHa/(oldHa+1))}
+  if(!LD.cells.length)setCells(1);
+  L('🌾 '+(kind==='buy'?'Bought':kind==='seep'?'Bought seepage land,':'Leased')+' 1 ha. Block is now '+landHa()+' ha.'+(plant?' The extension was planted to the same mix.':''),'good');
+}
+function buyPeq(id){
+  const e=PEQ.find(x=>x.id===id),lv=G.upg[id]||0;if(lv>=e.d.length)return;
+  if(e.t&&tierOf()<e.t[lv]){toast('Needs tier '+e.t[lv]);return}
+  const c=peqCost(e,lv);if(!canPay(c)){toast('Not enough credit');return}
+  spend('capex',c);G.upg[id]=lv+1;G.land.equip+=c;L('🏗️ Installed: '+e.d[lv].split(':')[0]+'.','good');
+}
+function fertilise(){
+  const LD=G.land;if(!mixOf()||LD.status==='none'||LD.status==='spent'){toast('Plant a pasture first');return}
+  const c=Math.round(landHa()*1350);if(!canPay(c)){toast('Not enough credit');return}
+  spend('pasture',c);addPasCost(c);LD.fert=Math.min(.45,LD.fert+.28);toast('Fertilised (50 kg N/ha): faster regrowth for about 6 weeks');
+}
+function splitGroup(g,k){
+  const share=k/g.n,h=JSON.parse(JSON.stringify(g));
+  h.n=k;h.n0=Math.max(k,Math.round(g.n0*share));h.cases=[];h.chronic=Math.min(g.chronic,Math.round(g.chronic*share));h.wd=[];h.withdraw=0;
+  for(const key in g.cost){h.cost[key]=(g.cost[key]||0)*share;g.cost[key]*=1-share}
+  h.gainKg=g.gainKg*share;h.dmKg=g.dmKg*share;g.gainKg*=1-share;g.dmKg*=1-share;
+  g.chronic-=h.chronic;g.n-=k;g.n0=Math.max(g.n,Math.round(g.n0*(1-share)));
+  return h;
+}
+function moveToPen(i,k){
+  const LD=G.land,g=LD.group,p=G.pens[i];if(!g||!p||!p.built||p.group)return false;
+  const free=g.n-heldCount(g);k=Math.min(k||free,free,penMax());
+  if(k<=0){toast('Sick or withdrawal animals cannot be moved');return false}
+  const h=k>=g.n?g:splitGroup(g,k);
+  h.pastDays=(h.pastDays||0)+h.dof;h.dof=0;h.onPasture=false;h.auto=true;h.slot=0;h.ready=false;h.adapt=8;
+  h.shr=(h.shr||0)+h.wt*.02;h.wt*=.98;h.adgH=[];h.worm=(h.worm||0)*.5;
+  p.group=h;SP[i]=[];if(h===g){LD.group=null;SP[8]=[]}
+  L('🚚 Moved '+k+' calves from the pasture into Pen '+(i+1)+' ('+Math.round(shownWt(h))+' kg).','good');
+  return true;
+}
+function pasOK(){const LD=G.land;return landHa()>0&&LD.status==='established'&&G.upg.perim>=1&&G.upg.pwater>=1&&!LD.group}
+function pasWhy(){const LD=G.land;if(LD.group)return'the pasture already has a mob';if(!landHa())return'no land yet';if(!G.upg.perim)return'no perimeter fence';if(!G.upg.pwater)return'no portable water';if(LD.status!=='established')return'the pasture is not established yet';return''}
+
+
+/* ============ goals, review, contracts, sorting, hay, to-do ============ */
+const GOALS=[
+ {id:'first',n:'First sale',d:'Sell your first lot',c:()=>G.nLots>=1},
+ {id:'black',n:'In the black',d:'Sell a lot at a profit',c:()=>G.nGood>=1},
+ {id:'five',n:'Five profitable lots',d:'Five lots sold at a profit',c:()=>G.nGood>=5},
+ {id:'twenty',n:'Twenty profitable lots',d:'A real track record',c:()=>G.nGood>=20},
+ {id:'clean',n:'Clean lot',d:'Sell 5+ head with no deaths',c:()=>G.sold.some(x=>x.nIn>=5&&x.mort===0)},
+ {id:'gain',n:'Fast gainer',d:'A lot gaining 1.6 kg/d or more over 100+ days',c:()=>G.sold.some(x=>x.dof>=100&&x.adg>=1.6)},
+ {id:'fcr',n:'Efficient feeder',d:'A lot with FCR of 5.5 or better',c:()=>G.sold.some(x=>x.dof>=100&&x.fcr>0&&x.fcr<=5.5)},
+ {id:'grass',n:'Grass-grown',d:'A profitable lot with 90+ days on pasture',c:()=>G.sold.some(x=>x.grass>=90&&x.profit>0)},
+ {id:'hay',n:'Hay maker',d:'Cut your first hay from spare strips',c:()=>(G.hayT||0)>0},
+ {id:'ct',n:'Contract delivered',d:'Fulfil a delivery contract',c:()=>(G.ctDone||0)>=1},
+ {id:'h100',n:'A hundred head',d:'100 head on the farm at once',c:()=>totalHead()>=100},
+ {id:'t2',n:'Smallholding',d:'Reach business tier 2',c:()=>tierOf()>=2},
+ {id:'t3',n:'Commercial',d:'Reach business tier 3',c:()=>tierOf()>=3},
+ {id:'t4',n:'Large feedlot',d:'Reach business tier 4',c:()=>tierOf()>=4},
+ {id:'nw500',n:'Half a million',d:'Net worth R500 000',c:()=>(G.nwc||0)>=5e5},
+ {id:'nw1m',n:'Millionaire',d:'Net worth R1 million',c:()=>(G.nwc||0)>=1e6},
+ {id:'nw5m',n:'Five million',d:'Net worth R5 million',c:()=>(G.nwc||0)>=5e6},
+ {id:'year',n:'A year in business',d:'Survive 365 days',c:()=>G.day>=365}];
+function checkGoals(){GOALS.forEach(g=>{if(G.ach[g.id])return;let ok=false;try{ok=g.c()}catch(e){}if(ok){G.ach[g.id]=G.day;L('🏅 Goal reached: '+g.n+'.','good');toast('🏅 Goal: '+g.n)}})}
+function goalsCard(){
+  const done=GOALS.filter(g=>G.ach[g.id]).length;
+  return'<div class="card"><h3>Goals <span class="mu sm">'+done+' of '+GOALS.length+'</span></h3>'+bar(done/GOALS.length,'')+
+    GOALS.map(g=>'<div class="kv"><span>'+(G.ach[g.id]?'<b class="g">✔</b> ':'○ ')+g.n+' <span class="mu sm">'+g.d+'</span></span><span class="mu sm">'+(G.ach[g.id]?'day '+G.ach[g.id]:'')+'</span></div>').join('')+
+    (G.review?'<div class="row" style="margin-top:6px"><button class="btn sm" data-act="review">Last yearly review</button></div>':'<div class="mu sm" style="margin-top:6px">A yearly review appears after each 365 days.</div>')+'</div>';
+}
+function sumObj(o){return Object.values(o).reduce((a,b)=>a+b,0)}
+function makeReview(){
+  const y=G.yr||{day:0,nw:0,out:0,inn:0},ls=G.sold.filter(x=>x.day>y.day),heads=ls.reduce((a,x)=>a+x.nOut,0);
+  const wavg=k=>heads?ls.reduce((a,x)=>a+x[k]*x.nOut,0)/heads:0,srt=ls.slice().sort((a,b)=>b.ppk-a.ppk);
+  const out=sumObj(G.fin.all.o),inn=sumObj(G.fin.all.i),nIn=ls.reduce((a,x)=>a+x.nIn,0);
+  const r={day:G.day,year:Math.round(G.day/365),lots:ls.length,heads,profit:ls.reduce((a,x)=>a+x.profit,0),ppk:heads?ls.reduce((a,x)=>a+x.ppk*x.nOut,0)/heads:0,
+    adg:wavg('adg'),fcr:wavg('fcr'),mort:nIn?ls.reduce((a,x)=>a+(x.nIn-x.nOut),0)/nIn:0,fatGood:wavg('fatGood'),
+    best:srt[0]?{pen:srt[0].pen,ppk:srt[0].ppk}:null,worst:srt.length?{pen:srt[srt.length-1].pen,ppk:srt[srt.length-1].ppk}:null,
+    nw:G.nwc||0,nw0:y.nw,out:out-y.out,inn:inn-y.inn,tips:[]};
+  if(!ls.length)r.tips.push('No lots were sold this year. Cattle only earn when they are finished and sold, so check your pens for animals near target weight.');
+  else{
+    if(r.mort>.03)r.tips.push('Mortality was '+(r.mort*100).toFixed(1)+'%. Look at health on arrival, mud and heat, and the first three weeks when BRD peaks.');
+    if(r.fcr>6.2)r.tips.push('FCR averaged '+num(r.fcr,1)+'. Check the ration energy, the step-up pace and feed wastage.');
+    if(r.adg<1.3)r.tips.push('ADG averaged '+num(r.adg,2)+' kg/d. Look at intake, mud, heat stress and protein.');
+    if(r.fatGood<.6)r.tips.push('Only '+Math.round(r.fatGood*100)+'% of animals sold at fat code 2–3. Sell closer to target weight, or sort the pen so the heaviest go first.');
+    if(r.ppk<0)r.tips.push('You lost money per head on average. Compare your break-even carcass price with what you sold at, and look at buying cost and haulage.');
+    if(!r.tips.length)r.tips.push('A solid year. To grow from here: more pens, better feed buying, and delivery contracts for a price premium.');
+  }
+  G.yr={day:G.day,nw:G.nwc||0,out,inn};G.review=r;return r;
+}
+function reviewHTML(r){
+  return'<h2>Year '+r.year+' review</h2><div class="grid">'+kv('Lots sold',r.lots)+kv('Head sold',r.heads)+kv('Profit (lots)',money(r.profit),r.profit>=0?'g':'b')+kv('Profit per head',money(r.ppk),r.ppk>=0?'g':'b')+
+   kv('Avg ADG',num(r.adg,2)+' kg/d')+kv('Avg FCR',num(r.fcr,1))+kv('Mortality',(r.mort*100).toFixed(1)+'%')+kv('Fat 2–3 share',Math.round(r.fatGood*100)+'%')+
+   kv('Net worth now',money(r.nw))+kv('Change this year',money(r.nw-r.nw0),r.nw>=r.nw0?'g':'b')+kv('Cash in',money(r.inn))+kv('Cash out',money(r.out))+'</div>'+
+   (r.best?'<div class="sm" style="margin-top:6px">Best lot: Pen '+r.best.pen+' at '+money(r.best.ppk)+'/hd. Worst: Pen '+r.worst.pen+' at '+money(r.worst.ppk)+'/hd.</div>':'')+
+   '<h4 class="mu sm" style="margin:10px 0 3px">What to improve</h4>'+r.tips.map(t=>'<div class="sm" style="padding:3px 0">• '+t+'</div>').join('')+
+   '<div style="margin-top:8px"><button class="btn pri" data-act="close">Carry on</button></div>';
+}
+// ---- contracts
+const BUYERS=['Regional abattoir','Retail chain','Local butcher group','Export packer'];
+function genContract(){
+  const t=tierOf(),n=t<=1?RI(5,10):t===2?RI(2,8)*5:t===3?RI(3,15)*10:RI(5,20)*20;
+  return{id:Math.random().toString(36).slice(2),buyer:pick(BUYERS),n,minCarc:Math.round(RI(225,290)/5)*5,fmin:2,fmax:Math.random()<.45?4:3,
+    prem:Math.round(R(.03,.08)*1000)/1000,due:G.day+RI(70,140),pen:RI(8,15)*100,exp:G.day+14,done:0};
+}
+function contractStep(){
+  G.offers=(G.offers||[]).filter(o=>o.exp>G.day);
+  (G.contracts||[]).slice().forEach(c=>{
+    if(G.day>=c.due&&c.done<c.n){const p=(c.n-c.done)*c.pen;spend('penalty',p);L('📑 Contract with '+c.buyer+' missed: '+(c.n-c.done)+' head short. Penalty '+money(p)+'.','bad');G.contracts=G.contracts.filter(x=>x!==c)}
+    else if(c.due-G.day===14&&c.done<c.n)L('📑 Contract with '+c.buyer+' is due in 14 days: '+c.done+' of '+c.n+' delivered.','warn');
+  });
+}
+function ctSpec(c){return'carcass ≥'+c.minCarc+' kg · fat code '+c.fmin+'–'+c.fmax+' · age class A · +'+num(c.prem*100,1)+'% on delivered animals'}
+function contractsHTML(){
+  let h='<div class="mu sm" style="margin-bottom:6px">Deliver qualifying animals by choosing “Contract delivery” when you sell a pen. Head you are short at the deadline cost a penalty. You can hold two contracts.</div>';
+  h+='<div class="card"><h3>Active contracts <span class="mu sm">'+G.contracts.length+'/2</span></h3>';
+  if(!G.contracts.length)h+='<div class="mu sm">None yet. Accept an offer below.</div>';
+  G.contracts.forEach(c=>{h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+c.buyer+'</b><span class="'+(c.due-G.day<20?'a':'')+' sm">due in '+Math.max(0,c.due-G.day)+' d</span></div>'+
+    '<div class="mu sm">'+ctSpec(c)+'</div>'+kv('Delivered',c.done+' of '+c.n+' head')+bar(c.done/c.n,'')+'<div class="mu sm">Penalty if short: '+money(c.pen)+' per head.</div></div>'});
+  h+='</div><div class="card"><h3>Offers</h3>';
+  if(!G.offers.length)h+='<div class="mu sm">No offers right now. New ones appear from time to time.</div>';
+  G.offers.forEach(o=>{h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+o.buyer+'</b><span class="mu sm">offer ends in '+(o.exp-G.day)+' d</span></div>'+
+    '<div class="sm">'+o.n+' head within '+(o.due-G.day)+' days</div><div class="mu sm">'+ctSpec(o)+'. Penalty '+money(o.pen)+' per head short.</div>'+
+    '<button class="btn sm pri" data-act="ctaccept" data-v="'+o.id+'" '+(G.contracts.length>=2?'disabled':'')+'>Accept</button></div>'});
+  return h+'</div>';
+}
+// ---- forecast + to-do
+function fcDay(k){
+  const w=G.wq&&G.wq[k];if(!w)return null;
+  const fh=j=>{const x=Math.sin((G.day+1)*12.9898+(k+1)*78.233+j*37.719)*43758.5453;return x-Math.floor(x)};
+  const d=new Date(G.t+(k+1)*864e5),hi=Math.round(w.tmax+(fh(1)-.5)*4),lo=Math.round(w.tmin+(fh(2)-.5)*3);
+  let rain='dry';if(w.rain>3&&fh(3)>.15)rain='rain ~'+Math.round(w.rain*(.7+.6*fh(4)))+' mm';else if(w.rain<=3&&fh(5)<.1)rain='showers possible';
+  return{lbl:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getUTCDay()],hi,lo,rain,hot:w.heat>1.5,cold:w.cold>.8};
+}
+function readyIn(){
+  const LD=G.land;if(!mixOf()||LD.status==='none'||!LD.cells.length)return null;
+  const gr=Math.max(2,growthMid());let best=null;
+  LD.cells.forEach((c,i)=>{if(i===LD.active&&LD.group)return;const d=c.B>=BREADY*.9?0:Math.ceil((BREADY*.9-c.B)/gr);if(best===null||d<best)best=d});
+  return best;
+}
+function todoItems(){
+  const T=[],LD=G.land;
+  const feed=[];ING.forEach(g=>{const d=G.demand[g.id];if(d>0){const cv=(G.stock[g.id].kg+onOrder(g.id))/d;if(cv<4)feed.push({g,cv})}});
+  feed.sort((a,b)=>a.cv-b.cv).slice(0,3).forEach(f=>T.push({lvl:f.cv<2?'bad':'warn',txt:f.g.s+': '+Math.floor(f.cv)+' days of feed left'+(onOrder(f.g.id)?' (order on the way)':''),btn:'Order 2 t',act:'buyF',v:f.g.id+':2000'}));
+  if(evGet('fmd'))T.push({lvl:'bad',txt:'Foot-and-mouth ban: no buying or selling for '+evGet('fmd').left+' more days.'});
+  G.pens.forEach((p,i)=>{
+    if(!p.built)return;const g=p.group;
+    if(!g){if(G.cash>20000)T.push({lvl:'info',txt:'Pen '+(i+1)+' is empty.',btn:'Market',act:'tab',v:'market'});return}
+    if(g.ready&&!blocked(g))T.push({lvl:'good',txt:'Pen '+(i+1)+' looks near target finish ('+Math.round(shownWt(g))+' kg).',btn:'Sell…',act:'sellpen',v:i});
+    const un=g.cases.filter(c=>!c.tx).length;
+    if(un&&!g.autoTx)T.push({lvl:'bad',txt:'Pen '+(i+1)+': '+un+' sick animal'+(un>1?'s':'')+' waiting for treatment.',btn:'Treat',act:'treatpen',v:i});
+    else if(g.cases.length>=Math.max(3,g.n*.1))T.push({lvl:'warn',txt:'Pen '+(i+1)+': '+g.cases.length+' sick. Check mud, heat and the ration.',btn:'Open',act:'pen',v:i});
+    if(p.mud>.6&&p.manure>2)T.push({lvl:'warn',txt:'Pen '+(i+1)+' is very muddy.',btn:'Scrape',act:'scrapepen',v:i});
+    else if(p.manure>20)T.push({lvl:'info',txt:'Pen '+(i+1)+' has '+num(p.manure,0)+' t of manure.',btn:'Scrape',act:'scrapepen',v:i});
+    const r=rcalc(G.rations[slotFor(g)].p),ac=acidRisk(g,r);
+    if(ac>.5)T.push({lvl:'warn',txt:'Pen '+(i+1)+': acidosis risk '+Math.round(ac*100)+'%. Check the step-up pace and roughage.',btn:'Open',act:'pen',v:i});
+  });
+  if(LD.group){
+    const g=LD.group;
+    if(g.ready)T.push({lvl:'good',txt:'Pasture calves are about 300 kg: time to move them into a pen.',btn:'Move…',act:'mvq'});
+    if(LD.pressure)T.push({lvl:'warn',txt:'No strip is ready: the mob is on grass that has not recovered.'});
+    else if(g.short)T.push({lvl:'warn',txt:'Pasture calves are short of forage. Add strips, lick or move them.'});
+  }
+  if(LD.status==='establishing'&&mixOf()){const since=G.day-LD.plantDay;T.push({lvl:'info',txt:since<mixOf().est?'Pasture establishing: about '+(mixOf().est-since)+' days to go.':'Pasture growing: first graze once strips reach 1 800 kg DM/ha.'})}
+  if(LD.status==='spent')T.push({lvl:'warn',txt:'The pasture has finished for the season. Replant to keep grazing.'});
+  const hp=hayPlan();if(hp&&hp.n>=2)T.push({lvl:'info',txt:hp.n+' spare strips could make '+num(hp.kg/1000,1)+' t of hay.',btn:'Cut hay',act:'hay'});
+  G.contracts.forEach(c=>{const dl=c.due-G.day;if(dl<=25&&c.done<c.n)T.push({lvl:dl<=10?'bad':'warn',txt:c.buyer+' contract: '+c.done+'/'+c.n+' delivered, due in '+dl+' days.'})});
+  if(G.offers.length)T.push({lvl:'info',txt:G.offers.length+' contract offer'+(G.offers.length>1?'s':'')+' waiting.',btn:'View',act:'ctview'});
+  if(G.cash<0)T.push({lvl:G.cash<-LIMIT_F()*.7?'bad':'warn',txt:'Overdraft: '+money(-G.cash)+' of '+money(LIMIT_F())+' used.'});
+  const ord={bad:0,warn:1,good:2,info:3};return T.sort((a,b)=>ord[a.lvl]-ord[b.lvl]);
+}
+function todayCard(){
+  const f=[0,1,2].map(fcDay).filter(Boolean),items=todoItems();
+  let h='<div class="card"><h3>Today <span class="mu sm">'+items.length+' item'+(items.length===1?'':'s')+'</span></h3>'+
+   '<div class="sm" style="margin-bottom:6px">'+f.map(d=>'<b>'+d.lbl+'</b> '+d.hi+'°/'+d.lo+'° '+d.rain+(d.hot?' 🥵':'')+(d.cold?' 🥶':'')).join(' &nbsp;·&nbsp; ')+'</div>';
+  if(!items.length)h+='<div class="g sm">Nothing needs you today.</div>';
+  items.slice(0,8).forEach(t=>{h+='<div class="row" style="justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:nowrap"><span class="sm '+(t.lvl==='bad'?'b':t.lvl==='warn'?'a':t.lvl==='good'?'g':'')+'" style="flex:1;min-width:0">'+t.txt+'</span>'+(t.btn?'<button class="btn sm" data-act="'+t.act+'" data-v="'+(t.v==null?'':t.v)+'">'+t.btn+'</button>':'')+'</div>'});
+  return h+'</div>';
+}
+// ---- individual animals + drafting
+const hz=(a,b)=>{const x=Math.sin(a*12.9898+b*78.233)*43758.5453;return x-Math.floor(x)};
+function zA(g,i,j){const sd=(g.seed||1)%9973,u=Math.max(1e-6,hz(sd,i*2+j*500+1)),v=hz(sd+3,i*2+j*500+2);return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)}
+function animalList(g,wt,adg){
+  const n=Math.min(g.n,400),sr=g.cases.length/Math.max(1,g.n),a=[];
+  for(let i=0;i<n;i++)a.push({tag:'#'+(((g.seed||1)%800)+100+i),wt:wt*(1+(g.cv||.08)*zA(g,i,0)),adg:Math.max(0,adg*(1+.22*zA(g,i,1))),sick:hz((g.seed||1)%9973,i+777)<sr});
+  return a;
+}
+function animalsCard(I){
+  const g=I.g,a=animalList(g,I.wt,I.adg).sort((x,y)=>y.wt-x.wt);
+  if(a.length<6)return'';
+  const row=x=>'<tr><td>'+x.tag+'</td><td>'+num(x.wt,0)+' kg</td><td>'+num(x.adg,2)+'</td><td class="'+(x.sick?'b':'')+'">'+(x.sick?'sick':'healthy')+'</td></tr>';
+  const slow=a.filter(x=>x.adg<I.adg*.6).length;
+  return'<div class="card"><h3>Animals <span class="mu sm">'+(G.upg.crush?'':'estimates')+'</span></h3><table><tr><th>Heaviest</th><th>Weight</th><th>ADG</th><th></th></tr>'+a.slice(0,3).map(row).join('')+
+   '<tr><th>Lightest</th><th></th><th></th><th></th></tr>'+a.slice(-3).reverse().map(row).join('')+'</table>'+
+   '<div class="mu sm" style="margin-top:4px">Spread: '+num(a[a.length-1].wt,0)+'–'+num(a[0].wt,0)+' kg. '+slow+' animal'+(slow===1?'':'s')+' gaining under 60% of the pen average. A wide spread costs you at grading; sort the pen and sell the heaviest first.</div></div>';
+}
+function invNorm(p){const q=p<.5?p:1-p,t=Math.sqrt(-2*Math.log(q)),x=t-(2.515517+.802853*t+.010328*t*t)/(1+1.432788*t+.189269*t*t+.001308*t*t*t);return p<.5?-x:x}
+function zTop(f){const zc=invNorm(1-f);return Math.exp(-zc*zc/2)/2.5066/f}
+function sortPreview(){
+  const g=G.pens[ui.sel].group,sv=ui.sort,free=g.n-heldCount(g),k=Math.max(1,Math.round(free*sv.frac)),zb=(sv.mode==='top'?1:-1)*zTop(Math.min(.9,sv.frac));
+  const W=shownWt(g),mw=W*(1+(g.cv||.08)*zb),rest=(W*g.n-mw*k)/Math.max(1,g.n-k);
+  return{k,mw,rest,W};
+}
+function sortHTML(){
+  const g=G.pens[ui.sel].group,sv=ui.sort,free=G.pens.map((p,i)=>i).filter(i=>G.pens[i].built&&!G.pens[i].group);
+  if(!free.length)return'<h2>No empty pen</h2><p class="mu">Sorting needs an empty pen to move one group into.</p><button class="btn" data-act="close">Close</button>';
+  if(!free.includes(sv.pen))sv.pen=free[0];
+  const pv=sortPreview();
+  return'<h2>Sort Pen '+(ui.sel+1)+'</h2><div class="mu sm">Split the pen by weight into a second pen. Each group becomes more even, so more animals hit the right fat code together, and you can sell the heavy group first. Costs R15 per head in handling and a little stress.</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Move to</h4><select data-inp="sortpen">'+free.map(i=>'<option value="'+i+'"'+(i===sv.pen?' selected':'')+'>Pen '+(i+1)+'</option>').join('')+'</select>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Which animals</h4><select data-inp="sortmode"><option value="top"'+(sv.mode==='top'?' selected':'')+'>The heaviest</option><option value="low"'+(sv.mode==='low'?' selected':'')+'>The lightest</option></select>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">How many</h4><select data-inp="sortfrac">'+[.2,.3,.4,.5].map(f=>'<option value="'+f+'"'+(sv.frac===f?' selected':'')+'>'+Math.round(f*100)+'% of the pen</option>').join('')+'</select>'+
+   '<div class="card" style="margin-top:8px">'+kv('Head moved',pv.k)+kv('Moved group avg',num(pv.mw,0)+' kg')+kv('Staying group avg',num(pv.rest,0)+' kg')+'</div>'+
+   '<div class="row"><button class="btn pri" data-act="sortok">Sort now</button><button class="btn" data-act="close">Cancel</button></div>';
+}
+function draftPen(i,j,frac,mode){
+  const g=G.pens[i].group,p2=G.pens[j];if(!g||!p2||!p2.built||p2.group)return false;
+  const free=g.n-heldCount(g),k=Math.max(1,Math.round(free*frac));if(free<2||k>=g.n)return false;
+  const cost=15*g.n;if(!canPay(cost)){toast('Not enough credit');return false}
+  const n0=g.n,W=g.wt,cv=g.cv||.08,zb=(mode==='top'?1:-1)*zTop(Math.min(.9,frac));
+  spend('maint',cost);
+  const h=splitGroup(g,k);
+  h.wt=W*(1+cv*zb);g.wt=(W*n0-h.wt*k)/(n0-k);h.cv=cv*.6;g.cv=cv*.8;
+  h.shr=(h.shr||0)+h.wt*.01;g.shr=(g.shr||0)+g.wt*.01;h.ready=false;g.ready=false;
+  p2.group=h;SP[j]=[];SP[i]=[];
+  L('✂️ Sorted Pen '+(i+1)+': '+k+' '+(mode==='top'?'heaviest':'lightest')+' head ('+Math.round(h.wt)+' kg avg) moved to Pen '+(j+1)+'.','good');
+  return true;
+}
+// ---- hay from spare strips
+function hayPlan(){
+  const LD=G.land,mix=mixOf();if(!mix||LD.status!=='established'||!LD.cells.length)return null;
+  const aHa=landHa()/LD.N,nx=LD.group?nextCell():-1,ing=(mix.id==='rye'||mix.id==='rus')?'lucerne':'erag',cap=SILO[G.upg.silo||0]*1000;
+  let room=cap-storeUsed(),kg=0;const idx=[],pickd=[];
+  LD.cells.forEach((c,i)=>{if(LD.group&&(i===LD.active||i===nx))return;if(c.B>=BREADY*1.1)idx.push(i)});
+  idx.sort((a,b)=>LD.cells[b].B-LD.cells[a].B);
+  idx.forEach(i=>{const c=LD.cells[i],as=(c.B-BRES*1.2)*aHa*.85/.88*(ing==='lucerne'?.9:1);if(as<=room){room-=as;kg+=as;pickd.push(i)}});
+  const n=pickd.length;
+  return{n,kg,ing,pick:pickd,cost:n*aHa*450+kg/1000*600,val:kg/1000*G.price[ing]};
+}
+function cutHay(){
+  const h=hayPlan();if(!h||!h.n){toast('No spare strips ready to cut');return}
+  if(!canPay(h.cost)){toast('Not enough credit');return}
+  const LD=G.land,st=G.stock[h.ing];
+  spend('pasture',h.cost);addPasCost(h.cost);
+  const cpt=h.cost/(h.kg/1000);st.cost=(st.kg*st.cost+h.kg*cpt)/(st.kg+h.kg);st.kg+=h.kg;
+  h.pick.forEach(i=>{LD.cells[i].B=BRES;LD.cells[i].age=0});
+  G.hayT=(G.hayT||0)+h.kg/1000;
+  L('🌾 Cut hay from '+h.n+' strip'+(h.n>1?'s':'')+': '+num(h.kg/1000,1)+' t added to '+ING.find(x=>x.id===h.ing).n.toLowerCase()+' stock, worth about '+money(h.val)+'.','good');toast('Hay cut: '+num(h.kg/1000,1)+' t');checkGoals();
+}
+function timingCard(){
+  const idx=id=>{const g=ING.find(x=>x.id===id),arr=SEAS[g.g];return seas(arr)/(arr.reduce((a,b)=>a+b,0)/12)};
+  let h='<div class="card"><h3>Buying timing</h3><div class="mu sm">Prices follow the season: grain is cheapest after harvest (May to July) and dearest before it; hay is cheapest in summer and dearest in winter. You can lock a price for 90 days for a 3% fee.</div>';
+  ['maize','hominy','soya','lucerne','erag'].forEach(id=>{
+    const g=ING.find(x=>x.id===id),ix=idx(id),pct=Math.round((ix-1)*100),f=G.fwd&&G.fwd[id],lk=f&&f.until>=G.day;
+    h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+g.s+'</b><span class="sm '+(ix<.96?'g':ix>1.05?'b':'')+'">'+(pct>0?'+':'')+pct+'% vs year average</span></div>'+
+     '<div class="mu sm">'+(ix<.96?'Cheap season: a good time to stock up.':ix>1.05?'Dear season: buy only what you need.':'Around the average.')+'</div>'+
+     (lk?'<div class="sm a">Locked at '+money(f.p)+'/t until day '+f.until+' (market '+money(G.price[id])+').</div>':(id==='maize'||id==='hominy'||id==='soya'?'<button class="btn sm" data-act="fwd" data-v="'+id+'">Lock at '+money(G.price[id]*1.03)+'/t for 90 d</button>':''))+'</div>'});
+  if(evGet('harvest'))h+='<div class="g sm">Harvest special on now: maize and hominy −10% on orders of 10 t or more.</div>';
+  return h+'</div>';
+}
+
+/* ============ new game ============ */
+function newGame(name){
+  G={v:6,ach:{},contracts:[],offers:[],fwd:{},yr:{day:0,nw:0,out:0,inn:0},review:null,wq:[],wanom:0,hayT:0,ctDone:0,name:name||'My Feedlot',day:0,t:Date.UTC(2026,2,1),cash:110000,loan:0,rate:.115,pens:[],stock:{},
+    rations:PRE.map(r=>({n:r.n,p:r.p.slice()})),price:{},px:{xc:0,xw:0},infl:1,under:0,
+    staff:{workers:0,stockmen:0,vet:0},upg:{perim:0,en:0,kit:0,pwater:0,pshade:0,irr:0,permit:0,penSize:0,shade:0,spr:0,drain:0,silo:0,mixer:0,hosp:0,crush:0,gen:0,fence:0},
+    land:{seep:0,own:0,lease:0,mix:null,status:'none',plantDay:0,plantCost:0,fit:1,stand:1,cl:0,sw:.6,fert:0,N:1,cells:[],active:0,dic:0,moveAuto:true,moveDays:3,early:true,lick:.4,lickSlot:5,group:null,autoIrr:true,hist:[],equip:0,pressure:0},orders:[],tier:1,nLots:0,nGood:0,nwc:0,wl:{req:0,cap:6},permitDue:0,autoBuy:true,autoScrape:true,minCover:6,tgtCover:14,market:[],ev:[],log:[],hist:{cash:[],w:[],c:[],maize:[]},sold:[],
+    fin:{cur:{o:{},i:{}},prev:{o:{},i:{}},all:{o:{},i:{}}},
+    w:{tmax:26,tmin:14,rain:0,hum:50,heat:0,cold:0,swing:false,anom:0},demand:{},over:false,pause:null};
+  ING.forEach(g=>G.px[g.id]={x:0});
+  for(let i=0;i<8;i++)G.pens.push({built:i<1,group:null,manure:0,mud:.1});
+  priceStep();weatherStep();
+  const st0={maize:1300,hominy:1000,soya:300,urea:50,lucerne:1500,erag:1200,molasses:300,premix:150};
+  ING.forEach(g=>G.stock[g.id]={kg:st0[g.id],cost:G.price[g.id]});
+  marketStep(true);
+  const mk=(i,breed,src,n,wt,age,opts)=>{
+    const ppk=G.price.w*(1+.0012*(240-wt))*BR[breed].pr*SRC[src].pm;
+    const proc=PROC.reduce((a,x)=>a+(opts[x.id]?x.c:0),0)*n;
+    const g=makeGroup(Object.assign({breed,src,n,wt,age,cattle:n*wt*ppk*1.06+haulCost(n),proc,cv:.07},opts));
+    G.pens[i].group=g;};
+  mk(0,'bons','farm',5,236,8.5,{clo:1,brd:1,dip:1});
+  G.nwc=netWorth().total;
+  L('🐂 Welcome to '+G.name+'! One small pen, five weaners and a bakkie. Press ▶ to start the clock.','good');
+  Object.keys(SP).forEach(k=>delete SP[k]);ui.sel=0;ui.view='farm';ui.speed=0;ui.phase=0;
+}
+function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(G))}catch(e){}}
+function loadSave(){try{const s=localStorage.getItem(SAVEKEY);if(!s)return null;const o=JSON.parse(s);if(o&&o.v===5)Object.assign(o,{v:6,ach:{},contracts:[],offers:[],fwd:{},yr:{day:o.day,nw:o.nwc||0,out:0,inn:0},review:null,wq:[],wanom:0,hayT:0,ctDone:0});return o&&o.v===6?o:null}catch(e){return null}}
+
+/* ============ charts / html helpers ============ */
+function chart(series,o){
+  o=o||{};const W=340,h=o.h||100,fmt=o.fmt||(v=>num(v,0));
+  const all=series.flatMap(s=>s.d);if(all.length<2)return'<div class="mu sm">Chart appears as data accumulates…</div>';
+  let mn=Math.min(...all),mx=Math.max(...all);if(mx-mn<1e-9)mx=mn+1;const pd=(mx-mn)*.08;mn-=pd;mx+=pd;
+  const n=Math.max(...series.map(s=>s.d.length));
+  const X=i=>34+(W-40)*i/Math.max(n-1,1),Y=v=>h-12-(h-22)*(v-mn)/(mx-mn);
+  let s='<svg viewBox="0 0 '+W+' '+h+'" class="ch">';
+  [mn+pd,(mn+mx)/2,mx-pd].forEach(v=>{s+='<line x1="34" x2="'+(W-6)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#3a4433" stroke-width=".6"/><text x="30" y="'+(Y(v)+3)+'" text-anchor="end">'+fmt(v)+'</text>'});
+  series.forEach(se=>{const off=n-se.d.length;s+='<polyline fill="none" stroke="'+se.c+'" stroke-width="1.8" points="'+se.d.map((v,i)=>X(i+off).toFixed(1)+','+Y(v).toFixed(1)).join(' ')+'"/>'});
+  s+='</svg>';
+  if(series.length>1||o.lg)s+='<div class="sm">'+series.map(se=>'<span style="color:'+se.c+'">■</span> '+se.n).join(' &nbsp; ')+'</div>';
+  return s;
+}
+const kv=(a,b,c)=>'<div class="kv"><span>'+a+'</span><span'+(c?' class="'+c+'"':'')+'>'+b+'</span></div>';
+const bar=(v,cls)=>'<div class="bar '+(cls||'')+'"><i style="width:'+clamp(v*100,0,100).toFixed(0)+'%"></i></div>';
+function trend(arr,cur){if(!arr.length)return'';const a=arr[Math.max(0,arr.length-15)],d=(cur-a)/a;return d>.02?'<span class="b">▲'+(d*100).toFixed(0)+'%</span>':d<-.02?'<span class="g">▼'+(-d*100).toFixed(0)+'%</span>':'<span class="mu">►</span>'}
+
+/* ============ pen stats ============ */
+function penInfo(p){
+  const g=p.group;if(!g)return null;
+  const br=BR[g.breed],sl=slotFor(g),r=rcalc(G.rations[sl].p);
+  const adg0=g.adgH.length?g.adgH.reduce((a,b)=>a+b,0)/g.adgH.length:0;
+  const adg=G.upg.crush?adg0:adg0*(1+g.bias2*((G.day-g.weighDay)<20?.15:1));
+  const gv=G.upg.crush?g:Object.assign({},g,{wt:shownWt(g)});
+  const app=appraise(saleGroup(gv),false),tgt=br.fin*.94;
+  const nS=g.cases.length,nC=g.chronic,nH=Math.max(0,g.n-nS-nC);
+  const sI=stress(p,g),acid=acidRisk(g,r);
+  const days=adg>.2?Math.max(0,(tgt-gv.wt)/adg):null;
+  const be=app.carcAvg*g.n>0?(app.cost+app.trans+app.comm)/(app.carc):0;
+  return{g,br,sl,r,adg,app,tgt,nS,nC,nH,sI,acid,days,be,wt:gv.wt,margin:app.net-app.cost,c:gv.wt/br.fin};
+}
+
+/* ============ panels ============ */
+const TABS=[['pens','🐂','Pens'],['pasture','🌱','Pasture'],['feed','🌽','Feed'],['market','🏷️','Market'],['money','💰','Money'],['build','🏗️','Build'],['log','📋','Log']];
+function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>'<button data-act="tab" data-v="'+t[0]+'" class="'+(ui.tab===t[0]?'on':'')+'"><i>'+t[1]+'</i>'+t[2]+'</button>').join('')}
+function renderCtl(){
+  $('#ctl').innerHTML=[['0','⏸'],['1','▶'],['2','▶▶'],['3','▶▶▶'],['4','⏩']].map(b=>'<button class="sp'+(ui.speed==b[0]?' on':'')+'" data-act="speed" data-v="'+b[0]+'">'+b[1]+'</button>').join('')+'<button class="sp" data-act="step1">+1 day</button>';
+  $('#back').style.display=ui.view!=='farm'?'block':'none';$('#vp').style.display=ui.view==='past'?'none':'block';
+}
+function renderHUD(){
+  if(!G)return;
+  const w=G.w,ico=w.rain>2?'🌧️':w.heat>1.2?'🥵':w.cold>.6?'🥶':w.tmax>22?'☀️':'⛅';
+  const cd=[];ING.forEach(g=>{const d=G.demand[g.id];if(d>0)cd.push(G.stock[g.id].kg/d)});
+  const cov=cd.length?Math.min(...cd):null;
+  const nw=G.cash-G.loan;
+  $('#hud').innerHTML='<div><b>'+dateStr()+'</b></div><div class="r"><span id="clk"></span> '+ico+' '+Math.round(w.tmax)+'°/'+Math.round(w.tmin)+'°'+(w.rain>1?' · '+Math.round(w.rain)+'mm':'')+'</div><div class="mu sm">T'+tierOf()+' '+TIERN[tierOf()]+'</div>'+
+   '<div><b class="'+(G.cash<0?'b':'g')+'">'+money(G.cash)+'</b></div><div class="r">🐂 <b>'+totalHead()+'</b> hd &nbsp; 🌽 <b class="'+(cov!==null&&cov<4?'b':'')+'">'+(cov===null?'–':Math.floor(cov)+'d')+'</b> feed</div><div class="mu sm">Day '+G.day+'</div>';
+}
+function updateClock(){
+  const h=(6+ui.phase*24)%24,s=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor((h%1)*60/10)*10).padStart(2,'0');
+  if(s!==ui.lastClock){ui.lastClock=s;const e=$('#clk');if(e)e.textContent=s}
+}
+function renderPanel(){
+  if(!G)return;
+  const a=document.activeElement;
+  if(a&&a.closest&&a.closest('#panel')&&(a.tagName==='INPUT'||a.tagName==='SELECT'))return;
+  const sc=$('#panel').scrollTop;
+  $('#panel').innerHTML=({pens:tPens,pasture:tPasture,feed:tFeed,market:tMarket,money:tMoney,build:tBuild,log:tLog})[ui.tab]();
+  $('#panel').scrollTop=sc;
+}
+function renderAll(){renderHUD();renderTabs();renderCtl();renderPanel();updateClock()}
+
+function tPens(){
+  let h=todayCard()+'<div class="chips">'+G.pens.map((p,i)=>{
+    const g=p.group;return'<button class="chip'+(ui.sel===i?' on':'')+'" data-act="pen" data-v="'+i+'">P'+(i+1)+(p.built?(g?' · '+g.n+(g.cases.length?' ⚠':'')+(g.ready?' ★':''):' · empty'):' · 🔒')+'</button>'}).join('')+'</div>';
+  const p=G.pens[ui.sel];
+  if(!p.built){const c=penCost(ui.sel),nt=PENTIER[ui.sel],okT=tierOf()>=nt,okP=permitOk((builtN()+1)*penCap());return h+'<div class="card"><h3>Pen '+(ui.sel+1)+' (not built)</h3><div class="mu">A new '+penCap()+'-head pen ('+penCap()*12+' m²) with feed bunk and water trough.</div>'+(okT?'':'<div class="a sm">Needs business tier '+nt+' ('+TIERN[nt]+').</div>')+(okP?'':'<div class="a sm">Needs the environmental authorisation (Build tab) to pass 500 head.</div>')+'<p><button class="btn pri" data-act="buyPen" '+(canPay(c)&&okT&&okP?'':'disabled')+'>Build for '+money(c)+'</button></p></div>'}
+  if(!p.group)return h+'<div class="card"><h3>Pen '+(ui.sel+1)+' · empty</h3><div class="kv"><span>Manure on floor</span><span>'+num(p.manure,1)+' t</span></div><div class="kv"><span>Mud</span><span>'+Math.round(p.mud*100)+'%</span></div><p><button class="btn pri" data-act="tab" data-v="market">Buy cattle in Market</button>'+(p.manure>0?'<button class="btn" data-act="scrape">Scrape pen</button>':'')+'</p></div>';
+  const I=penInfo(p),g=I.g,mon=I.margin;
+  h+='<div class="card"><h3><span>Pen '+(ui.sel+1)+' · '+I.br.n+'</span><span class="tag">'+SRC[g.src].n+'</span></h3>'+
+   '<div class="grid">'+
+   kv('Head',g.n+' <span class="mu">(of '+g.n0+')</span>')+kv('Days on feed',totDays(g)+(g.pastDays?' <span class="mu">('+g.pastDays+' on grass)</span>':''))+
+   kv('Avg live weight',num(I.wt,0)+' kg'+(G.upg.crush?'':' <span class="mu">est.</span>'))+kv('Target finish',num(I.tgt,0)+' kg')+
+   kv('ADG (14 d)'+(G.upg.crush?'':' est.'),num(I.adg,2)+' kg/d',I.adg>1.5?'g':I.adg<1.1?'b':'a')+kv('Est. days to target',I.days===null?'–':Math.round(I.days))+
+   kv('DM intake',num(g.lastDMI,1)+' kg/hd')+kv('FCR (DM:gain)',g.gainKg>0?num(g.dmKg/g.gainKg,1):'–')+
+   kv('Feed cost / hd / day',money(g.n?g.lastFeed/g.n:0,2))+kv('Cost of gain',g.gainKg>0?money((g.cost.feed+g.cost.vet)/g.gainKg,2)+'/kg':'–')+
+   '</div>'+
+   '<h4>If sold today (best channel: '+CHN[I.app.best]+')</h4><div class="grid">'+
+   kv('Carcass avg',num(I.app.carcAvg,0)+' kg')+kv('Dressing',num(I.app.drAvg,1)+'%')+
+   kv('Fat 2–3 share',Math.round((I.app.fat[2]+I.app.fat[3])/Math.max(1,I.app.n)*100)+'%')+kv('Grade A share',Math.round(I.app.age.A/Math.max(1,I.app.n)*100)+'%')+
+   kv('Net revenue',money(I.app.net))+kv('Total cost',money(I.app.cost))+
+   kv('Margin',money(mon),mon>=0?'g':'b')+kv('Margin per head',money(mon/Math.max(1,g.n)),mon>=0?'g':'b')+kv('Break-even carcass price',money(I.be,2)+'/kg')+
+   '</div></div>';
+  // health
+  const mort=1-g.n/g.n0,dk=Object.keys(g.dead).filter(k=>g.dead[k]).map(k=>({brd:'BRD',acid:'acidosis',heat:'heat',lsd:'LSD',urea:'urea',clos:'clostridial',theft:'theft',bloat:'bloat',tick:'tick fever',kikuyu:'kikuyu poisoning',other:'other'}[k]+' '+g.dead[k])).join(', ');
+  h+='<div class="card"><h3>Health & welfare</h3><div class="grid">'+
+   kv('Healthy',I.nH)+kv('Sick',I.nS+(I.nS?' <span class="mu">('+g.cases.filter(c=>c.tx).length+' treated)</span>':''),I.nS?'b':'')+
+   kv('Chronic',I.nC,I.nC?'a':'')+kv('Deaths',(g.n0-g.n)+' ('+(mort*100).toFixed(1)+'%)',mort>.03?'b':'')+
+   kv('Held back (sick / withdrawal)',heldCount(g)?heldCount(g)+' hd'+(g.withdraw?' · up to '+g.withdraw+' d':''):'none',heldCount(g)?'a':'g')+kv('Treatments given',g.treatN)+'</div>'+
+   (dk?'<div class="mu sm">Deaths: '+dk+'</div>':'')+
+   '<h4>Conditions</h4>'+
+   '<div class="kv"><span>Mud</span><span>'+Math.round(p.mud*100)+'%</span></div>'+bar(p.mud,p.mud>.6?'d':p.mud>.35?'w':'')+
+   '<div class="kv"><span>Heat stress</span><span>'+num(I.sI.heat,1)+' / 3</span></div>'+bar(I.sI.heat/3,I.sI.heat>1.5?'d':I.sI.heat>.7?'w':'')+
+   '<div class="kv"><span>Cold stress</span><span>'+num(I.sI.cold,1)+'</span></div>'+bar(I.sI.cold/1.5,'c')+
+   '<div class="kv"><span>Acidosis risk</span><span>'+Math.round(I.acid*100)+'%</span></div>'+bar(I.acid,I.acid>.5?'d':I.acid>.2?'w':'')+
+   '<div class="kv"><span>Rumen adaptation / ration starch</span><span>'+num(g.adapt,0)+'% / '+num(I.r.st,0)+'% DM</span></div>'+bar(g.adapt/60,'c')+
+   '<div class="kv"><span>Stocking density</span><span>'+num(penCap()*12/g.n,1)+' m²/hd'+(g.n>penCap()?' <span class="b">crowded</span>':'')+'</span></div>'+
+   '<div class="kv"><span>Manure in pen</span><span>'+num(p.manure,1)+' t</span></div>'+bar(dirt(p),dirt(p)>.7?'d':'w')+
+   '</div>';
+  h+=animalsCard(I);
+  // controls
+  h+='<div class="card"><h3>Management</h3><div class="mu sm">Ration</div><select data-inp="ration">'+
+   '<option value="a"'+(g.auto?' selected':'')+'>Auto step-up programme (days on feed)</option>'+
+   G.rations.map((r,i)=>'<option value="'+i+'"'+(!g.auto&&g.slot===i?' selected':'')+'>'+r.n+'</option>').join('')+'</select>'+
+   '<div class="mu sm" style="margin-top:3px">Now feeding: <b>'+G.rations[I.sl].n+'</b> · ME '+num(I.r.me,1)+' MJ/kg · CP '+num(I.r.cp,1)+'% · NDF '+num(I.r.ndf,0)+'%</div>'+
+   '<div class="mu sm" style="margin-top:8px">Feeding level</div><select data-inp="level"><option value="1"'+(g.feedLevel===1?' selected':'')+'>Ad lib (100%)</option><option value=".95"'+(g.feedLevel===.95?' selected':'')+'>Restricted 95%</option><option value=".9"'+(g.feedLevel===.9?' selected':'')+'>Restricted 90%</option></select>'+
+   '<label class="ck"><input type="checkbox" data-inp="autotx"'+(g.autoTx?' checked':'')+'> Auto-treat sick animals when pulled (R160 first line, R340 second line)</label>'+
+   '<div class="row" style="margin-top:6px">'+
+   (I.nS&&g.cases.some(c=>!c.tx)?'<button class="btn" data-act="treat">Treat sick now</button>':'')+
+   (p.manure>0?'<button class="btn" data-act="scrape">Scrape pen ('+num(p.manure,1)+' t)</button>':'')+
+   (I.nC?'<button class="btn" data-act="cull">Cull '+I.nC+' chronic</button>':'')+(G.upg.crush?'':'<button class="btn" data-act="weigh">Weigh (R600)</button>')+
+   '<button class="btn" data-act="sortq">Sort pen…</button><button class="btn pri" data-act="sellq">Sell pen…</button></div></div>';
+  h+='<div class="card"><h3>Weight history</h3>'+chart([{d:g.whist.map(v=>v*(I.wt/g.wt)),c:'#e2a63a',n:'Avg weight kg'}],{h:90,lg:0})+'<div class="mu sm">Sampled every 3 days. Target finish '+num(I.tgt,0)+' kg.'+(G.upg.crush?'':' Without a scale these are your estimates; weigh the cattle (R600) or install a crush & scale for exact numbers.')+'</div></div>';
+  return h;
+}
+
+
+const CELLCOL={bare:['#8a6a45','#7fa455'],grow:['#8fbf55','#b9de7d'],ready:['#2f8a34','#74d96d'],over:['#a9a548','#e0d672'],graze:['#a79a5e','#8a7a45'],dorm:['#b3a269','#d0be84']};
+const CELLNAME={bare:'Bare / establishing',grow:'Growing',ready:'Ready to graze',over:'Overgrown',graze:'Just grazed',dorm:'Dormant'};
+function recHTML(){
+  const r=recDays(),LD=G.land;
+  return kv('Recommended',r.d+' day'+(r.d>1?'s':'')+' per strip','g')+'<div class="mu sm">Rest target '+Math.round(r.rest)+' days at today\'s growth, over '+LD.N+' strip'+(LD.N>1?'s':'')+' gives '+num(r.byRest,1)+' days each; the forage in one strip lasts '+num(r.bySupply,1)+' days for this mob.</div>';
+}
+function tPasture(){
+  const LD=G.land,ha=landHa(),t=tierOf(),mix=mixOf();
+  let h='<div class="card"><h3>Land <span class="mu sm">'+num(ha,0)+' ha'+(ha?' · perimeter '+num(perimLen(ha),0)+' m':'')+'</span></h3>'+
+   kv('Owned',LD.own+' ha'+(LD.seep?' ('+LD.seep+' ha seepage)':''))+kv('Leased',LD.lease+' ha'+(LD.lease?' ('+money(LD.lease*250*G.infl)+'/month)':''))+kv('Tier '+t+' allows',LANDMAX[t]+' ha')+
+   '<div class="row" style="margin-top:6px"><button class="btn sm" data-act="landlease">Lease +1 ha ('+money(250*G.infl)+'/month)</button><button class="btn sm" data-act="landbuy">Buy +1 ha ('+money(landPrice())+')</button><button class="btn sm" data-act="landseep">Buy +1 ha seepage land ('+money(Math.round(landPrice()*1.3/500)*500)+')</button></div><div class="mu sm">Seepage land is a footslope or vlei margin with shallow subsoil moisture in winter, so pasture keeps growing in the dry season. Suits Russian grass.</div>'+
+   '<div class="mu sm">Fence for the extra land is added at your current perimeter standard'+(mix?', and the extension is planted to the same mix':'')+'. Land counts towards net worth.</div></div>';
+  h+='<div class="card"><h3>Fencing & grazing equipment</h3>';
+  PEQ.forEach(e=>{
+    const lv=G.upg[e.id]||0,max=e.d.length,nt=e.t&&lv<max?e.t[lv]:0,okT=t>=nt;
+    let extra='';
+    if(e.id==='en')extra=lv?'<div class="sm">Covers '+ENHA[lv]+' ha. Your block: '+num(ha,0)+' ha'+(ha>ENHA[lv]?' <span class="b">too big: weak fence, more breakouts</span>':'')+'</div>':'<div class="a sm">Strip fences only work with an energizer.</div>';
+    if(e.id==='kit')extra='<div class="sm">Strips possible: '+maxCells()+(G.upg.en?'':' (needs an energizer for more than 1)')+'</div>';
+    h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+e.n+'</b><span class="mu sm">Level '+lv+'/'+max+'</span></div>'+
+     '<div class="mu sm">'+(lv>0?'✔ '+e.d[lv-1]+'<br>':'')+(lv<max?'Next: '+e.d[lv]:'Fully equipped')+'</div>'+extra+
+     (lv<max?(!okT?'<div class="a sm">Needs tier '+nt+' ('+TIERN[nt]+')</div>':'<button class="btn sm" data-act="peq" data-v="'+e.id+'" '+(canPay(peqCost(e,lv))?'':'disabled')+'>Buy '+money(peqCost(e,lv))+'</button>'):'')+'</div>'});
+  h+='</div>';
+  h+='<div class="card"><h3>'+(LD.status==='none'?'Plant a pasture':'Replant or change mix')+'</h3>';
+  if(!ha)h+='<div class="a sm">Lease or buy land first.</div>';
+  else if(!G.upg.perim)h+='<div class="a sm">Build at least a polywire perimeter before planting.</div>';
+  MIX.forEach(m=>{
+    const inWin=m.win.includes(month());
+    h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+m.n+'</b><span class="'+(inWin?'g':'a')+' sm">'+(inWin?'Good time to plant':'Out of season')+'</span></div><div class="mu sm">'+m.note+'</div>'+
+     '<div class="grid">'+kv('Plant in',m.win.map(i=>MON[i]).join(', '))+kv('Establishes in',m.est+' days')+kv('Quality (ME / CP)',m.me[0]+' MJ · '+m.cp[0]+'% young')+kv('Cost for '+num(ha,0)+' ha',money(m.cost*ha))+'</div>'+
+     '<button class="btn sm" data-act="plant" data-v="'+m.id+'" '+(!ha||!G.upg.perim||LD.group||!canPay(m.cost*ha)?'disabled':'')+'>'+(LD.status==='none'?'Plant':'Replant with this')+'</button></div>'});
+  h+='</div>';
+  if(LD.status!=='none'&&mix){
+    const cnt={bare:0,grow:0,ready:0,over:0,graze:0,dorm:0};LD.cells.forEach(c=>cnt[cellState(c)]++);
+    const avgB=LD.cells.reduce((a,c)=>a+c.B,0)/LD.cells.length,since=G.day-LD.plantDay;
+    const rest=LD.cells.filter((c,i)=>i!==LD.active||!LD.group).reduce((a,c)=>a+c.age,0)/Math.max(1,LD.cells.length-(LD.group?1:0));
+    h+='<div class="card"><h3>Pasture status <span class="mu sm">'+mix.n.replace('','')+'</span></h3><div class="grid">'+
+     kv('Stage',LD.status==='establishing'?(since<mix.est?'Establishing ('+(mix.est-since)+' d to go)':'Establishing: first graze at 1 800 kg DM/ha'):LD.status==='spent'?'Finished (replant)':'Established',LD.status==='spent'?'b':'g')+kv('Stand health',Math.round(LD.stand*100)+'%',LD.stand<.5?'b':'')+
+     kv('Clover share',Math.round(LD.cl*100)+'%')+kv('Soil moisture',Math.round(LD.sw*100)+'%',LD.sw<.3?'b':'')+
+     kv('Avg biomass',num(avgB,0)+' kg DM/ha')+kv('Average rest',num(rest,0)+' d (target '+Math.round(restTarget())+')',rest<restTarget()*.7?'a':'g')+kv('Next strip ready in',(function(){const r=readyIn();return r===null?'–':r===0?'now':r+' d'})())+'</div>'+
+     '<div class="sm" style="margin-top:6px">'+Object.keys(cnt).filter(k=>cnt[k]).map(k=>'<span class="sw" style="background:'+CELLCOL[k][0]+'"></span>'+CELLNAME[k]+' '+cnt[k]).join(' &nbsp; ')+'</div>'+
+     '<div style="margin-top:6px">'+chart([{d:LD.hist,c:'#82cc74',n:'Average strip biomass (kg DM/ha)'}],{h:90,lg:1})+'</div></div>';
+    const mc=maxCells();
+    h+='<div class="card"><h3>Grazing plan</h3>'+
+     '<div class="kv"><span>Strips in the block</span><span><b id="pn">'+LD.N+'</b> (max '+mc+')</span></div><input type="range" min="1" max="'+mc+'" step="1" value="'+Math.min(LD.N,mc)+'" data-inp="pcells"'+(mc<2?' disabled':'')+'>'+
+     '<div class="mu sm">Strip size: '+num(ha/LD.N*10000,0)+' m² each. Carrying capacity at today\'s growth: about '+Math.floor(growthMid()*ha*.65/(.027*(LD.group?LD.group.wt:200)))+' calves of '+(LD.group?Math.round(LD.group.wt):200)+' kg.</div>'+
+     '<div id="prec" style="margin-top:6px">'+recHTML()+'</div>'+
+     '<label class="ck"><input type="checkbox" data-inp="pauto"'+(LD.moveAuto?' checked':'')+'> Use the recommended days per move</label>'+
+     '<div class="row"><span>Move every</span><button class="btn sm" data-act="pdays" data-v="-1">−</button><b>'+moveEvery()+' day'+(moveEvery()>1?'s':'')+'</b><button class="btn sm" data-act="pdays" data-v="1">+</button>'+(LD.moveAuto?'<span class="mu sm">(following the recommendation)</span>':'')+'</div>'+
+     '<label class="ck"><input type="checkbox" data-inp="pearly"'+(LD.early?' checked':'')+'> Move early if a strip is eaten out</label>'+
+     '<div class="kv"><span>Pasture lick (kg per head per day)</span><span><b id="plk">'+num(LD.lick,1)+'</b></span></div><input type="range" min="0" max="2" step="0.1" value="'+LD.lick+'" data-inp="plick">'+
+     '<div class="mu sm">Lick is the “Pasture lick” ration in the Feed tab. It lifts protein and minerals; without any, calves grow about 7% slower. More than 0.3 kg also lowers bloat risk on clover.</div>'+
+     (G.upg.irr?'<label class="ck"><input type="checkbox" data-inp="pirr"'+(LD.autoIrr?' checked':'')+'> Irrigate automatically when soil moisture is low</label>':'')+
+     '<div class="row" style="margin-top:6px"><button class="btn sm" data-act="fert">Fertilise ('+money(ha*1350)+')</button></div></div>';
+  }
+  const hp=hayPlan();
+  if(hp)h+='<div class="card"><h3>Hay from spare strips</h3><div class="mu sm">Strips that are overgrown and not needed for grazing can be cut and baled into your feed store.</div><div class="grid">'+kv('Strips to cut',hp.n)+kv('Hay',num(hp.kg/1000,1)+' t')+kv('Cost',money(hp.cost))+kv('Worth at market',money(hp.val))+'</div><button class="btn sm" data-act="hay" '+(hp.n?'':'disabled')+'>Cut hay</button></div>';
+  // calves
+  const g=LD.group;
+  h+='<div class="card"><h3>Calves on pasture</h3>';
+  if(!g){h+='<div class="mu sm">No calves on the pasture. Buy light calves in the Market tab and choose “Pasture” as the destination.'+(pasWhy()?' Not possible yet: '+pasWhy()+'.':'')+'</div>'}
+  else{
+    const adg=g.adgH.length?g.adgH.reduce((a,b)=>a+b,0)/g.adgH.length:0,d=g.lastDiet||{me:0,cp:0,forage:0,lick:0,alloc:0};
+    const cell=LD.cells[LD.active],aHa=ha/LD.N,mort=1-g.n/g.n0,held=heldCount(g);
+    h+='<div class="grid">'+kv('Head',g.n+' <span class="mu">(of '+g.n0+')</span>')+kv('Days on grass',g.dof)+
+     kv('Avg weight',num(shownWt(g),0)+' kg'+(G.upg.crush?'':' <span class="mu">est.</span>'))+kv('Move to pen at',Math.round(300)+' kg')+
+     kv('ADG (14 d)',num(adg*(G.upg.crush?1:1+g.bias2),2)+' kg/d',adg>.7?'g':adg<.4?'b':'a')+kv('Intake (forage + lick)',num(d.forage,1)+' + '+num(d.lick,1)+' kg DM')+
+     kv('Diet energy / protein',num(d.me,1)+' MJ · '+num(d.cp,0)+'%')+kv('Stock density',num(g.n*g.wt/aHa/1000,0)+' t/ha')+
+     kv('Healthy / sick',(g.n-g.cases.length-g.chronic)+' / '+g.cases.length,g.cases.length?'b':'')+kv('Deaths',(g.n0-g.n)+' ('+(mort*100).toFixed(1)+'%)',mort>.03?'b':'')+
+     kv('Worm burden',Math.round((g.worm||0)*100)+'%',g.worm>.5?'b':'')+kv('Held back',held?held+' hd':'none',held?'a':'g')+'</div>'+
+     (g.short?'<div class="b sm">The strip is short of forage: calves are getting less than they want. Shorten the move, add strips, or feed more lick.</div>':'')+
+     '<div class="row" style="margin-top:6px"><button class="btn pri" data-act="mvq">Move to a pen…</button><button class="btn" data-act="deworm">Deworm (R38/hd)</button>'+(g.cases.some(c=>!c.tx)?'<button class="btn" data-act="ptreat">Treat sick now</button>':'')+(G.upg.crush?'':'<button class="btn" data-act="pweigh">Weigh (R600)</button>')+'</div>';
+  }
+  return h+'</div>';
+}
+
+function rationSum(slot){
+  const r=rcalc(G.rations[slot].p),fl=[];
+  if(r.urea>1.5)fl.push('<span class="b">Urea &gt;1.5%: toxicity risk</span>');
+  if(r.prem<1.5)fl.push('<span class="a">Premix &lt;1.5%: no monensin benefit'+(r.prem<.8?', mineral deficiency':'')+'</span>');
+  if(r.ndf<15)fl.push('<span class="b">Roughage low: acidosis risk</span>');
+  if(Math.abs(r.tot-100)>.4)fl.push('<span class="mu">Mix totals '+num(r.tot,1)+'% (normalised)</span>');
+  return'<div class="grid">'+kv('Energy (ME)',num(r.me,2)+' MJ/kg DM')+kv('Crude protein',num(r.cp,1)+'% DM')+kv('NDF (roughage)',num(r.ndf,1)+'% DM')+kv('Starch+sugar',num(r.st,1)+'% DM')+kv('Dry matter',num(r.dm*100,0)+'%')+kv('Cost as-fed',money(r.cost*1000)+'/t')+'</div>'+kv('Cost per kg DM',money(r.costDM,2))+(fl.length?'<div class="sm" style="margin-top:4px">'+fl.join('<br>')+'</div>':'');
+}
+function tFeed(){
+  const cap=SILO[G.upg.silo||0]*1000,used=storeUsed();
+  let h='<div class="card"><h3>Feed store <span class="mu sm">'+num(used/1000,1)+' / '+SILO[G.upg.silo||0]+' t</span></h3>'+bar(used/cap,used/cap>.9?'w':'')+
+   '<div style="overflow-x:auto"><table><tr><th>Ingredient</th><th>Stock</th><th>Cover</th><th>R/t</th><th>Buy t</th></tr>';
+  ING.forEach(g=>{
+    const st=G.stock[g.id],d=G.demand[g.id]||0,cv=d>0?(st.kg+onOrder(g.id))/d:null,hist=g.id==='maize'?G.hist.maize:[];
+    h+='<tr><td>'+g.s+'</td><td>'+num(st.kg/1000,1)+' t</td><td class="'+(cv!==null&&cv<4?'b':'')+'">'+(cv===null?'–':Math.floor(cv)+' d')+'</td><td>'+num(G.price[g.id],0)+(g.id==='maize'?' '+trend(hist,G.price.maize):'')+'</td><td><span style="white-space:nowrap"><button class="btn sm" data-act="buyF" data-v="'+g.id+':500">+.5</button><button class="btn sm" data-act="buyF" data-v="'+g.id+':2000">+2</button><button class="btn sm" data-act="buyF" data-v="'+g.id+':10000">+10</button><button class="btn sm" data-act="buyF" data-v="'+g.id+':28000">+28</button></span></td></tr>'});
+  h+='</table></div><div class="mu sm">Order size sets the price: under 1 t +18%, under 5 t +10%, under 15 t +3%, 15–28 t list price, a full 28 t load −5%. Delivery takes 1 day (under 5 t), 2 days (under 15 t) or 3 days.</div>'+(G.orders.length?'<div class="sm" style="margin-top:4px">On order: '+G.orders.map(o=>ING.find(x=>x.id===o.id).s+' '+num(o.kg/1000,1)+' t (day '+o.due+')').join(', ')+'</div>':'')+'<label class="ck"><input type="checkbox" data-inp="autobuy"'+(G.autoBuy?' checked':'')+'> Auto-buy ingredients</label>'+
+   '<div class="mu sm">Buy when cover drops below <b id="mcv">'+G.minCover+'</b> days, refill to <b id="tcv">'+G.tgtCover+'</b> days (limited by storage and credit).</div>'+
+   '<input type="range" min="2" max="15" step="1" value="'+G.minCover+'" data-inp="mincov"><input type="range" min="7" max="40" step="1" value="'+G.tgtCover+'" data-inp="tgtcov"></div>';
+  const sl=ui.rEdit,rt=G.rations[sl];
+  h+='<div class="card"><h3>Ration formulation</h3><div class="chips">'+G.rations.map((r,i)=>'<button class="chip'+(sl===i?' on':'')+'" data-act="rsel" data-v="'+i+'">'+r.n+'</button>').join('')+'</div>';
+  ING.forEach((g,i)=>{h+='<div class="kv"><span>'+g.n+'</span><span><b id="rv'+i+'">'+num(rt.p[i],1)+'</b>% as-fed</span></div><input type="range" min="0" max="80" step="0.5" value="'+rt.p[i]+'" data-inp="ing" data-i="'+i+'">'});
+  h+='<div id="rsum" style="margin-top:6px">'+rationSum(sl)+'</div><div class="row" style="margin-top:6px"><button class="btn sm" data-act="rnorm">Normalise to 100%</button><button class="btn sm" data-act="rreset">Reset to preset</button></div>'+
+   '<div class="mu sm" style="margin-top:6px">Cattle adapt to starch by ~1.5 points per day. Jumping ahead of their adaptation, too little roughage, or running out of feed raises acidosis risk. Auto programme: Receiving 0–6 d, Step-up 1 7–13 d, Step-up 2 14–20 d, Grower 21–55 d, Finisher 56 d+.</div></div>';
+  h+=timingCard();
+  return h;
+}
+
+function tMarket(){
+  let h='<div class="chips">'+[['buy','Buy cattle'],['contracts','Contracts'+(G.offers.length?' ('+G.offers.length+')':'')],['prices','Price charts']].map(t=>'<button class="chip'+(ui.mkt===t[0]?' on':'')+'" data-act="mkt" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+  if(ui.mkt==='contracts')return h+contractsHTML();
+  if(ui.mkt==='prices'){
+    const H=G.hist;
+    return h+'<div class="card"><h3>Weaner price <span>'+money(G.price.w,2)+'/kg live '+trend(H.w,G.price.w)+'</span></h3>'+chart([{d:H.w,c:'#e2a63a',n:'R/kg live'}],{h:95,fmt:v=>num(v,1)})+'</div>'+
+     '<div class="card"><h3>Carcass price, class A <span>'+money(G.price.c,2)+'/kg '+trend(H.c,G.price.c)+'</span></h3>'+chart([{d:H.c,c:'#82cc74',n:'R/kg carcass'}],{h:95,fmt:v=>num(v,1)})+'<div class="mu sm">Grade multipliers: AB −6%, B −12%, C −20%. Fat code 1 −10%, 2 −1%, 3 ideal, 4 −4%, 5 −10%.</div></div>'+
+     '<div class="card"><h3>Maize <span>'+money(G.price.maize)+'/t '+trend(H.maize,G.price.maize)+'</span></h3>'+chart([{d:H.maize,c:'#6fb4dc',n:'R/t'}],{h:95})+'</div>';
+  }
+  if(evGet('fmd'))h+='<div class="card"><b class="b">🚫 FMD movement ban: no buying or selling for '+evGet('fmd').left+' more day(s).</b></div>';
+  h+='<div class="mu sm" style="margin-bottom:6px">New lots appear weekly. Weaner price today '+money(G.price.w,2)+'/kg live · carcass A '+money(G.price.c,2)+'/kg.</div>';
+  if(!G.market.length)h+='<div class="card mu">No lots listed right now.</div>';
+  G.market.forEach(m=>{
+    const ppk=lotPrice(m),sr=SRC[m.src],br=BR[m.breed];
+    h+='<div class="card"><h3><span>'+br.n+' · '+m.n+' hd</span><span class="a">'+money(ppk,2)+'/kg</span></h3>'+
+     '<div class="grid">'+kv('Avg weight',m.wt+' kg')+kv('Age',m.age+' months')+kv('Source',sr.n)+kv('Health risk',sr.risk<.9?'Low':sr.risk<1.2?'Medium':'High',sr.risk<.9?'g':sr.risk<1.2?'a':'b')+kv('Per head',money(ppk*m.wt))+kv('Frame (finish)',br.fin+' kg')+kv('Uniformity',m.cv<.09?'Even':m.cv<.12?'Mixed':'Very mixed',m.cv<.09?'g':m.cv<.12?'a':'b')+'</div>'+(m.tag?'<div style="margin-top:4px"><span class="tag">'+m.tag+'</span></div>':'')+(m.wt<=190?'<div style="margin-top:4px"><span class="tag">Light calves: suit pasture backgrounding</span></div>':'')+
+     '<div class="row" style="margin-top:6px"><button class="btn pri" data-act="buyq" data-v="'+m.id+'" '+(evGet('fmd')?'disabled':'')+'>Buy…</button><span class="mu sm">Expires day '+m.exp+'</span></div></div>'});
+  return h;
+}
+
+function netWorth(){
+  let cattle=0;G.pens.forEach(p=>{if(p.group)cattle+=appraise(p.group,false).net});
+  const feed=ING.reduce((a,g)=>a+G.stock[g.id].kg/1000*G.stock[g.id].cost,0);
+  let infra=G.pens.reduce((a,p,i)=>a+(p.built&&i>0?PENCOST[i]*.6:0),0);
+  UPG.forEach(u=>{for(let l=0;l<(G.upg[u.id]||0);l++)infra+=u.lv[l]*.5});
+  infra+=G.land.own*landPrice()*.9+G.land.equip*.4;
+  const lg=G.land.group;if(lg)cattle+=lg.n*lg.wt*G.price.w*(1+.0012*(240-lg.wt))*.97;
+  return{cattle,feed,infra,total:G.cash-G.loan+cattle+feed+infra};
+}
+const CATS={penalty:'Contract penalties',pasture:'Pasture rent, seed & inputs',cattle:'Cattle purchases',proc:'Processing',feed:'Feed',vet:'Vet & treatments',wages:'Wages',utilities:'Utilities',interest:'Interest',maint:'Maintenance & fixed',capex:'Capital projects',sales:'Cattle sales',manure:'Manure sales'};
+function tMoney(){
+  const nw=netWorth(),f=G.fin;
+  let h='<div class="card"><h3>Balance</h3><div class="grid">'+kv('Cash',money(G.cash),G.cash<0?'b':'g')+kv('Term loan',money(G.loan))+kv('Loan rate',((G.rate+LSPREAD[tierOf()])*100).toFixed(2)+'%')+kv('Overdraft rate',((G.rate+SPREAD[tierOf()])*100).toFixed(2)+'%')+kv('Overdraft limit',money(LIMIT_F()))+kv('Term loan limit',MAXLOAN_F()?money(MAXLOAN_F()):'none yet')+kv('Cattle value (net)',money(nw.cattle))+kv('Feed stock',money(nw.feed))+kv('Infrastructure (50%)',money(nw.infra))+kv('Net worth',money(nw.total),'a')+'</div>'+
+   '<div class="row" style="margin-top:6px"><button class="btn sm" data-act="borrow" data-v="25000">Borrow R25k</button><button class="btn sm" data-act="borrow" data-v="2000000">Borrow R2m</button><button class="btn sm" data-act="borrow" data-v="100000">Borrow R100k</button><button class="btn sm" data-act="borrow" data-v="500000">Borrow R500k</button><button class="btn sm" data-act="repay" data-v="25000">Repay R25k</button><button class="btn sm" data-act="repay" data-v="100000">Repay R100k</button><button class="btn sm" data-act="repay" data-v="2000000">Repay R2m</button></div>'+
+   '<div class="mu sm">Your overdraft limit grows with your net worth and the number of profitable lots you have sold. Small borrowers pay a higher margin over the bank rate; it falls as you move up tiers. Term loans start at Tier 2. If cash falls below −'+money(LIMIT_F())+' the bank closes you down.</div></div>';
+  const cats=Object.keys(CATS);
+  h+='<div class="card"><h3>Income & expenses</h3><table><tr><th></th><th>This month</th><th>Last month</th><th>Total</th></tr>';
+  cats.forEach(c=>{
+    const isIn=c==='sales'||c==='manure',g=k=>(isIn?f[k].i[c]:f[k].o[c])||0;
+    if(!g('cur')&&!g('prev')&&!g('all'))return;
+    h+='<tr><td>'+CATS[c]+'</td><td class="'+(isIn?'g':'')+'">'+num(g('cur'))+'</td><td class="'+(isIn?'g':'')+'">'+num(g('prev'))+'</td><td class="'+(isIn?'g':'')+'">'+num(g('all'))+'</td></tr>'});
+  const net=k=>Object.values(f[k].i).reduce((a,b)=>a+b,0)-Object.values(f[k].o).reduce((a,b)=>a+b,0);
+  h+='<tr><th>Net cash flow</th><th>'+num(net('cur'))+'</th><th>'+num(net('prev'))+'</th><th>'+num(net('all'))+'</th></tr></table></div>';
+  h+='<div class="card"><h3>Cash less loan</h3>'+chart([{d:G.hist.cash,c:'#82cc74',n:'Rand'}],{h:95,fmt:v=>(v/1e6).toFixed(2)+'m'})+'</div>';
+  h+='<div class="card"><h3>Closed lots</h3>';
+  if(!G.sold.length)h+='<div class="mu sm">No lots sold yet.</div>';
+  else{
+    const s=G.sold,avg=k=>s.reduce((a,x)=>a+x[k],0)/s.length;
+    h+='<div class="grid">'+kv('Lots sold',s.length)+kv('Avg profit / hd',money(avg('ppk')),avg('ppk')>=0?'g':'b')+kv('Avg ADG',num(avg('adg'),2)+' kg')+kv('Avg FCR',num(avg('fcr'),1))+'</div>'+
+     '<table style="margin-top:6px"><tr><th>Lot</th><th>DOF</th><th>ADG</th><th>FCR</th><th>Mort</th><th>R/hd</th></tr>'+
+     s.slice(0,12).map(x=>'<tr><td>P'+x.pen+' '+BR[x.breed].n.split(' ')[0]+'</td><td>'+x.dof+'</td><td>'+num(x.adg,2)+'</td><td>'+num(x.fcr,1)+'</td><td>'+(x.mort*100).toFixed(1)+'%</td><td class="'+(x.ppk>=0?'g':'b')+'">'+num(x.ppk)+'</td></tr>').join('')+'</table>';
+  }
+  return h+'</div>';
+}
+
+function tBuild(){
+  const t=tierOf(),nx=t<5?t+1:null,wl=workload();
+  let h='<div class="card"><h3>Business tier <span class="a">'+t+' · '+TIERN[t]+'</span></h3><div class="mu sm">'+TIERSZ[t]+'. Net worth '+money(G.nwc||0)+'. Credit limit '+money(LIMIT_F())+(MAXLOAN_F()?', term loans up to '+money(MAXLOAN_F()):', no term loans yet')+'.</div>';
+  if(nx)h+='<h4>To reach tier '+nx+': '+TIERN[nx]+'</h4>'+reqs(nx).map(r=>'<div class="kv"><span>'+r[0]+'</span><span class="'+(r[1]?'g':'mu')+'">'+(r[1]?'✔':'…')+'</span></div>').join('');
+  else h+='<div class="g sm">Top tier reached.</div>';
+  h+='</div><div class="card"><h3>Staff & workload</h3>'+
+   kv('Daily work needed',num(wl.req,1)+' h of '+num(wl.cap,1)+' h available',wl.req>wl.cap?'b':'')+bar(wl.req/wl.cap,wl.req>wl.cap?'d':wl.req/wl.cap>.8?'w':'')+
+   '<div class="mu sm">You give 6 h a day alongside other work; each worker or stockman adds 8 h. Hand-feeding takes the most time; mixing equipment cuts it. Overload means slower detection of sick animals and more disease.</div>'+
+   '<div class="kv"><span>General workers ('+money(WAGE)+'/mo)</span><span>'+G.staff.workers+'</span></div><div class="row"><button class="btn sm" data-act="staff" data-v="workers:1">Hire</button><button class="btn sm" data-act="staff" data-v="workers:-1">Fire</button></div>'+
+   '<div class="kv"><span>Stockmen / pen-riders ('+money(STOCKMAN)+'/mo)</span><span>'+G.staff.stockmen+'</span></div><div class="mu sm">Check cattle 1.5× faster, spot sick animals sooner, BRD risk −10%.</div><div class="row"><button class="btn sm" data-act="staff" data-v="stockmen:1">Hire</button><button class="btn sm" data-act="staff" data-v="stockmen:-1">Fire</button></div>'+
+   '<label class="ck"><input type="checkbox" data-inp="vet"'+(G.staff.vet?' checked':'')+'> Vet on retainer ('+money(VET)+'/month): +7% treatment success</label>'+
+   '<label class="ck"><input type="checkbox" data-inp="autoscrape"'+(G.autoScrape?' checked':'')+'> Auto-scrape pens when manure exceeds 25 t</label></div>';
+  h+='<div class="card"><h3>Pens</h3>'+G.pens.map((p,i)=>{
+    const c=penCost(i),okT=t>=PENTIER[i],okP=permitOk((builtN()+1)*penCap());
+    return'<div class="lst row" style="justify-content:space-between"><span>Pen '+(i+1)+'</span>'+(p.built?'<span class="g">Built</span>':!okT?'<span class="a sm">Needs tier '+PENTIER[i]+'</span>':!okP?'<span class="a sm">Needs authorisation</span>':'<button class="btn sm" data-act="buyPenI" data-v="'+i+'" '+(canPay(c)?'':'disabled')+'>Build '+money(c)+'</button>')+'</div>'}).join('')+'</div>';
+  h+='<div class="card"><h3>Infrastructure</h3>';
+  UPG.forEach(u=>{
+    const lv=G.upg[u.id]||0,max=u.lv.length,pend=u.id==='permit'&&G.permitDue&&!lv;
+    const needT=lv<max?u.t[lv]:0,okT=t>=needT,okP=u.id!=='penSize'||lv>=max||permitOk(builtN()*PENCAP[lv+1]);
+    h+='<div class="lst"><div class="row" style="justify-content:space-between"><b>'+u.n+'</b><span class="mu sm">Level '+lv+'/'+max+'</span></div>'+
+     '<div class="mu sm">'+(lv>0?'✔ '+u.d[lv-1]+'<br>':'')+(lv<max?'Next: '+u.d[lv]:'Fully upgraded')+'</div>'+
+     (pend?'<div class="a sm">Pending: approval due day '+G.permitDue+' ('+Math.max(0,G.permitDue-G.day)+' days)</div>':lv<max?(!okT?'<div class="a sm">Needs tier '+needT+' ('+TIERN[needT]+')</div>':!okP?'<div class="a sm">Needs the environmental authorisation first</div>':'<button class="btn sm" data-act="upg" data-v="'+u.id+'" '+(canPay(upgCost(u,lv))?'':'disabled')+'>Buy '+money(upgCost(u,lv))+'</button>'):'')+'</div>'});
+  return h+'</div>';
+}
+function tLog(){
+  let h=goalsCard()+'<div class="card"><h3>Event log</h3><div class="log">'+G.log.slice(0,60).map(l=>{const d=new Date(l.t);return'<div class="'+(l.k==='bad'?'b':l.k==='good'?'g':l.k==='warn'?'a':'')+'"><span class="mu sm">'+d.getUTCDate()+' '+MON[d.getUTCMonth()]+'</span> '+l.txt+'</div>'}).join('')+'</div></div>';
+  h+='<div class="card"><h3>How it plays</h3><div class="sm">'+
+   '<p><b>Loop:</b> buy weaners in <i>Market</i> → process them → they step up from roughage-rich to high-grain rations → sell when they reach target finish (about fat code 3) and the price suits you.</p>'+
+   '<p><b>Growth</b> comes from energy intake above maintenance (set by ration energy, dry-matter intake, weather, mud, health). Protein below requirement slows ADG.</p>'+
+   '<p><b>Acidosis</b> rises when the ration\'s starch outruns the rumen\'s adaptation, roughage is low, or feed runs out.</p>'+
+   '<p><b>BRD</b> peaks in the first weeks, worse for high-risk sources, mud, heat, cold, crowding and understaffing. Treated animals carry an antibiotic withdrawal: you cannot sell them until it clears.</p>'+
+   '<p><b>Carcass value</b> depends on dressing %, age class and fat code (set by weight relative to the breed frame).</p>'+
+   '<p><b>Pasture backgrounding:</b> lease or buy land, fence it, buy an energizer, strip kit and portable water, plant a mix, then stock it with light calves. The block is split into strips with temporary fence. Calves graze one strip at a time and move on after the set days; the game recommends the days from the regrowth rate and the forage in each strip. Strips show growing, ready, overgrown, grazed or dormant. Move calves into a pen at about 300 kg for finishing.</p><p><b>Growth in tiers:</b> you start as a backyard operation. Net worth, a record of profitable lots and the right equipment unlock bigger pens, new sales channels, cheaper credit and eventually permits. Small lots pay more for cattle, haulage and feed and sell through a butcher or auction; full 30-head truck loads and 28 t feed loads are cheaper per unit.</p><p class="mu">Costs, prices and biology are simplified and tuned for play. They are not market quotes or formal nutrient-requirement tables.</p></div></div>';
+  h+='<div class="card"><h3>Game</h3><div class="row"><button class="btn" data-act="save">Save now</button><button class="btn dng" data-act="newq">New game…</button></div><div class="mu sm">Progress auto-saves every day in this browser.</div></div>';
+  return h;
+}
+
+/* ============ modals ============ */
+function openModal(html){ui.modal=true;const m=$('#modal');m.innerHTML='<div class="mc">'+html+'</div>';m.style.display='block';m.scrollTop=0}
+function closeModal(){ui.modal=false;$('#modal').style.display='none';$('#modal').innerHTML='';renderAll()}
+function buyHTML(){
+  const b=ui.buy,m=b.m,br=BR[m.breed],ppk=lotPrice(m);
+  const free=G.pens.map((p,i)=>({p,i})).filter(x=>x.p.built&&!x.p.group),pas=pasOK();
+  if(!free.length&&!pas)return'<h2>No empty pen or pasture</h2><p class="mu">Sell a pen, build a new one or set up the pasture first.'+(pasWhy()?' Pasture: '+pasWhy()+'.':'')+'</p><button class="btn" data-act="close">Close</button>';
+  if(b.pen==null||(b.pen===-1&&!pas)||(b.pen>=0&&!free.some(x=>x.i===b.pen)))b.pen=free.length?free[0].i:-1;
+  const toPas=b.pen===-1,maxN=Math.min(m.n,toPas?pastureMaxHead():penMax());b.n=Math.max(1,Math.min(b.n,maxN));
+  return'<h2>Buy '+br.n+'</h2><div class="mu sm">'+m.n+' hd · '+m.wt+' kg · '+m.age+' mo · '+SRC[m.src].n+' · '+money(ppk,2)+'/kg</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Destination</h4><select data-inp="bpen">'+free.map(x=>'<option value="'+x.i+'"'+(x.i===b.pen?' selected':'')+'>Pen '+(x.i+1)+'</option>').join('')+(pas?'<option value="P"'+(toPas?' selected':'')+'>Pasture (strip grazing)</option>':'')+'</select>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Head: <b id="bn">'+b.n+'</b> <span class="mu">('+(toPas?'max '+maxN+' on '+num(landHa(),0)+' ha':'comfortable ≤'+penCap()+', max '+penMax()+' per pen')+')</span></h4><input type="range" min="1" max="'+maxN+'" step="1" value="'+b.n+'" data-inp="bn">'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Processing on arrival</h4>'+
+   PROC.map(x=>'<label class="ck"><input type="checkbox" data-inp="bproc" data-k="'+x.id+'"'+(b.o[x.id]?' checked':'')+'><span><b>'+x.n+'</b> · '+money(x.c)+'/hd<br><span class="mu">'+x.d+'</span></span></label>').join('')+
+   '<div class="card" style="margin-top:8px" id="bsum"></div><div class="row"><button class="btn pri" data-act="buyok">Confirm purchase</button><button class="btn" data-act="close">Cancel</button></div>';
+}
+function buyTotals(){
+  const b=ui.buy,m=b.m,ppk=lotPrice(m),n=b.n;
+  const prem=n<10?1.06:n<20?1.03:1,cattle=n*m.wt*ppk*prem,trans=haulCost(n),proc=n*PROC.reduce((a,x)=>a+(b.o[x.id]?x.c:0),0),tot=cattle+trans+proc;
+  b.tot=tot;b.cattle=cattle+trans;b.proc=proc;
+  const ok=canPay(tot);
+  $('#bsum').innerHTML=kv('Cattle',money(cattle))+(prem>1?kv('Small-lot premium','+'+Math.round((prem-1)*100)+'%','a'):'')+kv('Haulage in ('+(n<=10?'bakkie trips':'livestock truck, R9 500 per 30 head')+')',money(trans))+kv('Processing',money(proc))+kv('Total',money(tot),'a')+kv('Per head',money(tot/n))+(ok?'':'<div class="b sm">Not enough credit: you need '+money(tot-(G.cash+LIMIT_F()))+' more.</div>');
+  const e=document.querySelector('[data-act="buyok"]');if(e)e.disabled=!ok;
+}
+function soldHTML(r){
+  const bd=r.breakdown;
+  return'<h2>Pen '+r.pen+' sold</h2><div class="grid">'+kv('Head sold',r.nOut+' of '+r.nIn)+kv('Days on feed',r.dof)+kv('Live weight',num(r.w0,0)+' → '+num(r.w1,0)+' kg')+kv('Carcass avg',num(r.carc,0)+' kg')+kv('ADG',num(r.adg,2)+' kg/d')+kv('FCR',num(r.fcr,1))+kv('Mortality',(r.mort*100).toFixed(1)+'%')+kv('Fat 2–3',Math.round(r.fatGood*100)+'%')+'</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Lot profit & loss</h4>'+kv('Net sale revenue',money(r.rev))+kv('Cattle + transport in',money(-bd.cattle))+kv('Processing',money(-bd.proc))+kv('Feed',money(-bd.feed))+kv('Vet',money(-bd.vet))+(bd.pas?kv('Pasture costs',money(-bd.pas)):'')+kv('Overheads (allocated)',money(-bd.oh))+kv('Cost of capital',money(-bd.int))+kv('<b>Profit</b>','<b>'+money(r.profit)+' ('+money(r.ppk)+'/hd)</b>',r.profit>=0?'g':'b')+
+   '<div class="mu sm" style="margin-top:6px">Sold via '+CHN[r.ch].toLowerCase()+'. Haulage, commission and fees ('+money(bd.trans)+') are already deducted from revenue.</div><div style="margin-top:8px"><button class="btn pri" data-act="close">OK</button></div>';
+}
+function sellHTML(i){
+  const p=G.pens[i],I=penInfo(p),g=I.g,a=I.app,bl=blocked(g);
+  let h='<h2>Sell Pen '+(i+1)+'?</h2>'+(heldCount(g)?'<div class="a sm">'+heldCount(g)+' sick or withdrawal animals stay behind and can be sold later.</div>':'')+'<div class="grid">'+kv('Head sold',a.n)+kv('Live avg',num(a.liveAvg,0)+' kg'+(G.upg.crush?'':' est.'))+kv('Carcass avg',num(a.carcAvg,0)+' kg')+kv('Dressing',num(a.drAvg,1)+'%')+kv('Carcass price A',money(G.price.c,2))+kv('Chronic',I.nC)+'</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Expected fat code mix</h4><table><tr>'+[1,2,3,4,5].map(f=>'<th>'+f+'</th>').join('')+'</tr><tr>'+[1,2,3,4,5].map(f=>'<td>'+Math.round(a.fat[f]/Math.max(1,a.n)*100)+'%</td>').join('')+'</tr></table>'+
+   '<div class="mu sm">Fat 3 pays full price; 1 and 5 are heavily discounted.'+(G.upg.crush?'':' Weights are your estimates; the abattoir and butcher weigh for real.')+'</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Where to sell (total cost to date '+money(a.cost)+')</h4>';
+  (a.q.contract?['contract']:[]).concat(['abattoir','butcher','auction']).forEach(c=>{
+    const q=a.q[c],pr=q.net-a.cost;
+    h+='<div class="card" style="margin-bottom:6px"><h3><span>'+CHN[c]+'</span>'+(c===a.best&&q.ok?'<span class="tag">best</span>':'')+'</h3>'+
+      (q.ok?kv('Net revenue',money(q.net))+kv('Selling costs',money(q.cost))+kv('Profit',money(pr)+' ('+money(pr/Math.max(1,g.n))+'/hd)',pr>=0?'g':'b')+'<div class="mu sm">'+q.note+'</div>':'<div class="mu sm">'+q.why+'</div>')+
+      '<button class="btn pri" data-act="sellch" data-v="'+c+'" '+(!q.ok||bl?'disabled':'')+'>Sell '+(g.n-heldCount(g))+' here</button></div>'});
+  return h+(bl?'<p class="b">'+bl+'</p>':'')+'<div class="row"><button class="btn" data-act="close">Not yet</button></div>';
+}
+function titleHTML(){
+  const has=!!loadSave();
+  return'<h2>🐂 Feedlot Manager</h2><p class="sm">Run a South African beef feedlot: buy weaners, formulate rations, protect their health, and sell finished cattle at the right time. Slow-paced; pause any time.</p>'+
+   '<p class="mu sm">Highveld climate (summer rainfall), Rand and kg. Prices and biology are simplified for play, not live market data.</p>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Feedlot name</h4><input id="fname" value="Highveld Feedlot" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--cd2);color:var(--tx);font-size:14px">'+
+   '<div class="row" style="margin-top:10px">'+(has?'<button class="btn pri" data-act="cont">Continue saved game</button>':'')+'<button class="btn'+(has?'':' pri')+'" data-act="startnew">New game</button></div>';
+}
+
+/* ============ actions ============ */
+const ACT={
+  tab(v){ui.tab=v;if(v==='pasture'&&landHa()>0)ui.view='past';else if(v==='pens'&&ui.view==='past')ui.view='farm';renderTabs();renderCtl();renderPanel();$('#panel').scrollTop=0},
+  pen(v){ui.sel=+v;if(G.pens[ui.sel].built)ui.view='pen';else ui.view='farm';renderCtl();renderPanel()},
+  farm(){ui.view='farm';renderCtl()},
+  vpas(){ui.view='past';renderCtl()},
+  sellpen(v){ui.sel=+v;ui.view='pen';renderCtl();openModal(sellHTML(+v))},
+  treatpen(v){const g=G.pens[+v].group;if(!g)return;g.cases.forEach(c=>{if(!c.tx)startTx(g,c)});renderAll()},
+  scrapepen(v){scrape(+v);renderAll()},
+  ctaccept(v){const o=G.offers.find(x=>x.id===v);if(!o)return;if(G.contracts.length>=2){toast('You can hold two contracts');return}G.offers=G.offers.filter(x=>x!==o);G.contracts.push(Object.assign({},o,{done:0}));L('📑 Accepted a contract with '+o.buyer+': '+o.n+' head by day '+o.due+'.','good');renderAll()},
+  ctview(){ui.mkt='contracts';ACT.tab('market')},
+  fwd(v){const f=G.fwd[v];if(f&&f.until>=G.day){toast('Already locked');return}const p=G.price[v]*1.03;G.fwd[v]={p,until:G.day+90};L('🔒 Locked '+ING.find(x=>x.id===v).s+' at '+money(p)+'/t for 90 days.','good');renderAll()},
+  sortq(){const g=G.pens[ui.sel].group;if(!g)return;ui.sort={pen:-1,frac:.3,mode:'top'};openModal(sortHTML())},
+  sortok(){const sv=ui.sort;if(sv&&draftPen(ui.sel,sv.pen,sv.frac,sv.mode)){closeModal()}else if(!ui.modal)renderAll()},
+  hay(){cutHay();renderAll()},
+  review(){if(G.review)openModal(reviewHTML(G.review))},
+  landlease(){buyLand('lease');renderAll()},
+  landbuy(){buyLand('buy');renderAll()},
+  landseep(){buyLand('seep');renderAll()},
+  peq(v){buyPeq(v);renderAll()},
+  plant(v){plantPasture(v);renderAll()},
+  pdays(v){const LD=G.land,cur=moveEvery();LD.moveAuto=false;LD.moveDays=clamp(cur+ +v,1,30);renderPanel()},
+  fert(){fertilise();renderAll()},
+  deworm(){const g=G.land.group;if(!g)return;const c=38*g.n;if(!canPay(c)){toast('Not enough credit');return}spend('vet',c);g.cost.vet+=c;g.worm=0;g.dipDays=60;toast('Dewormed and dipped: worm burden reset');renderPanel()},
+  ptreat(){const g=G.land.group;if(!g)return;g.cases.forEach(c=>{if(!c.tx)startTx(g,c)});renderPanel()},
+  pweigh(){const g=G.land.group;if(!g)return;if(!canPay(600)){toast('Not enough credit');return}spend('maint',600);g.weighDay=G.day;toast('Weighed: estimates are accurate for about 3 weeks');renderAll()},
+  mvq(){const g=G.land.group;if(!g)return;const free=G.pens.map((p,i)=>i).filter(i=>G.pens[i].built&&!G.pens[i].group);ui.mv={pen:free.length?free[0]:-1};openModal(mvHTML())},
+  mvok(){if(!ui.mv||ui.mv.pen<0)return;const ok=moveToPen(ui.mv.pen);if(ok){ui.sel=ui.mv.pen;ui.tab='pens';ui.view='pen'}closeModal()},
+  speed(v){ui.speed=+v;renderCtl()},
+  step1(){if(ui.modal||G.over)return;ui.speed=0;stepDay();ui.phase=0;afterStep();renderAll()},
+  buyPen(){ACT.buyPenI(ui.sel)},
+  buyPenI(v){const i=+v,c=penCost(i);if(!canPay(c))return;if(tierOf()<PENTIER[i]){toast('Needs tier '+PENTIER[i]);return}if(!permitOk((builtN()+1)*penCap())){toast('Needs the environmental authorisation');return}spend('capex',c);G.pens[i].built=true;L('🏗️ Built Pen '+(i+1)+'.','good');renderAll()},
+  mkt(v){ui.mkt=v;renderPanel()},
+  rsel(v){ui.rEdit=+v;renderPanel()},
+  rnorm(){const r=G.rations[ui.rEdit],t=r.p.reduce((a,b)=>a+b,0)||1;r.p=r.p.map(v=>Math.round(v/t*1000)/10);const d=100-r.p.reduce((a,b)=>a+b,0);r.p[0]=Math.round((r.p[0]+d)*10)/10;renderPanel()},
+  rreset(){G.rations[ui.rEdit].p=PRE[ui.rEdit].p.slice();renderPanel()},
+  buyF(v){const[id,kg]=v.split(':');const cap=SILO[G.upg.silo||0]*1000,used=storeUsed(),k=Math.min(+kg,cap-used);
+    if(k<=0){toast('Storage full');return}const c=k/1000*feedPrice(id,k);if(!canPay(c)){toast('Not enough credit');return}buyFeed(id,k);renderAll()},
+  buyq(v){const m=G.market.find(x=>x.id===v);if(!m)return;ui.buy={m,pen:null,n:Math.min(m.n,penCap()),o:{clo:1,brd:1,dip:1}};openModal(buyHTML());buyTotals()},
+  buyok(){
+    const b=ui.buy;if(!b||!canPay(b.tot))return;const m=b.m,toPas=b.pen===-1,p=toPas?null:G.pens[b.pen];
+    if(toPas?!pasOK():(!p||p.group))return;
+    spend('cattle',b.cattle);spend('proc',b.proc);
+    const g=makeGroup({riskMul:m.riskMul,cv:m.cv,breed:m.breed,src:m.src,n:b.n,wt:m.wt,age:m.age,cattle:b.cattle,proc:b.proc,clo:b.o.clo,brd:b.o.brd,dip:b.o.dip,imp:b.o.imp,meta:b.o.meta});
+    m.n-=b.n;if(m.n<=0)G.market=G.market.filter(x=>x!==m);
+    if(toPas){g.onPasture=true;g.adapt=8;G.land.group=g;G.land.dic=0;SP[8]=[];ui.tab='pasture';ui.view='past';
+      L('🚛 Bought '+b.n+' '+BR[m.breed].n+' ('+m.wt+' kg) for the pasture: '+money(b.tot)+'.','good')}
+    else{p.group=g;SP[b.pen]=[];ui.sel=b.pen;ui.tab='pens';ui.view='pen';
+      L('🚛 Bought '+b.n+' '+BR[m.breed].n+' ('+m.wt+' kg) for Pen '+(b.pen+1)+': '+money(b.tot)+'.','good')}
+    closeModal();
+  },
+  close(){closeModal()},
+  sellq(){const p=G.pens[ui.sel];if(p.group)openModal(sellHTML(ui.sel))},
+  sellch(v){sell(ui.sel,v);renderAll()},
+  weigh(){const g=G.pens[ui.sel].group;if(!g)return;if(!canPay(600)){toast('Not enough credit');return}spend('maint',600);g.weighDay=G.day;toast('Weighed: estimates are accurate for about 3 weeks');renderAll()},
+  scrape(){scrape(ui.sel);renderAll()},
+  cull(){cull(ui.sel);renderAll()},
+  treat(){const g=G.pens[ui.sel].group;if(!g)return;g.cases.forEach(c=>{if(!c.tx)startTx(g,c)});renderPanel()},
+  borrow(v){const a=+v;if(G.loan+a>MAXLOAN_F()){toast(MAXLOAN_F()?'Loan limit '+money(MAXLOAN_F()):'No term loans before Tier 2');return}G.loan+=a;G.cash+=a;L('🏦 Borrowed '+money(a)+'.');renderAll()},
+  repay(v){const a=Math.min(+v,G.loan);if(a<=0)return;if(G.cash<a){toast('Not enough cash');return}G.loan-=a;G.cash-=a;L('🏦 Repaid '+money(a)+'.');renderAll()},
+  staff(v){const[k,d]=v.split(':');G.staff[k]=Math.max(0,G.staff[k]+ +d);renderAll()},
+  upg(v){const u=UPG.find(x=>x.id===v),lv=G.upg[v]||0;if(lv>=u.lv.length)return;const c=upgCost(u,lv);if(!canPay(c))return;
+    if(tierOf()<u.t[lv]){toast('Needs tier '+u.t[lv]);return}
+    if(v==='penSize'&&!permitOk(builtN()*PENCAP[lv+1])){toast('Needs the environmental authorisation');return}
+    if(v==='permit'){if(G.permitDue)return;spend('capex',c);G.permitDue=G.day+90;L('📜 Authorisation application lodged. Approval takes about 90 days.');renderAll();return}
+    spend('capex',c);G.upg[v]=lv+1;L('🏗️ Installed: '+u.n+' (level '+(lv+1)+').','good');renderAll()},
+  save(){save();toast('Saved')},
+  newq(){openModal('<h2>Start a new game?</h2><p class="mu">Your current feedlot will be overwritten.</p><div class="row"><button class="btn dng" data-act="startnew2">Yes, start over</button><button class="btn" data-act="close">Cancel</button></div>')},
+  startnew2(){ui.modal=false;$('#modal').style.display='none';newGame(G.name);save();startHelp()},
+  startnew(){const n=($('#fname')||{}).value;ui.modal=false;$('#modal').style.display='none';newGame(n);save();startHelp()},
+  cont(){G=loadSave();ui.modal=false;$('#modal').style.display='none';ui.sel=0;ui.view='farm';renderAll()}
+};
+function startHelp(){
+  renderAll();
+  openModal('<h2>Quick start</h2><div class="sm"><p>• Tap a <b>pen</b> on the farm view to zoom in; tap <b>◀ Farm view</b> to go back.</p><p>• Use <b>▶</b> to run time (10 s per day at 1×). <b>⏸</b> pauses; <b>+1 day</b> steps manually.</p><p>• <b>Pens</b> tab: health, growth, margin and when to sell. <b>Feed</b>: ingredient stocks and ration formulation. <b>Market</b>: buy weaners. <b>Build</b>: staff and infrastructure.</p><p>• You start as a backyard operation: one small pen, five weaners, hand-feeding, no scale (weights are estimates). Grow through the business tiers in the Build tab. Watch ADG, acidosis risk, mud and heat, and keep feed in stock.</p></div><button class="btn pri" data-act="close">Let\'s go</button>');
+}
+function afterStep(){
+  renderHUD();
+  if(G.pendingReview&&!G.pause){G.pendingReview=false;ui.speed=0;renderCtl();openModal(reviewHTML(G.review))}
+  if(G.pause){const t=G.pause;G.pause=null;ui.speed=0;renderCtl();openModal('<h2>'+(G.over?'Game over':'Event')+'</h2><p>'+t+'</p>'+(G.over?'<button class="btn pri" data-act="newq">New game</button>':'<button class="btn pri" data-act="close">OK</button>'))}
+  renderPanel();
+}
+function mvHTML(){
+  const g=G.land.group,free=G.pens.map((p,i)=>i).filter(i=>G.pens[i].built&&!G.pens[i].group),k=Math.min(g.n-heldCount(g),penMax());
+  if(!free.length)return'<h2>No empty pen</h2><p class="mu">Sell a pen or build a new one first.</p><button class="btn" data-act="close">Close</button>';
+  return'<h2>Move calves to a pen</h2><div class="mu sm">'+g.n+' calves, '+num(shownWt(g),0)+' kg. Up to '+k+' healthy head fit in one pen. They restart the step-up rations and have to adapt to grain from scratch.</div>'+
+   '<h4 class="mu sm" style="margin:10px 0 3px">Into pen</h4><select data-inp="mvpen">'+free.map(i=>'<option value="'+i+'">Pen '+(i+1)+'</option>').join('')+'</select>'+
+   '<div class="row" style="margin-top:10px"><button class="btn pri" data-act="mvok">Move '+k+' head</button><button class="btn" data-act="close">Cancel</button></div>';
+}
+const INP={
+  sortpen(t){ui.sort.pen=+t.value;t.blur();$('#modal').firstChild.innerHTML=sortHTML()},
+  sortmode(t){ui.sort.mode=t.value;t.blur();$('#modal').firstChild.innerHTML=sortHTML()},
+  sortfrac(t){ui.sort.frac=+t.value;t.blur();$('#modal').firstChild.innerHTML=sortHTML()},
+  mvpen(t){ui.mv.pen=+t.value;t.blur()},
+  pcells(t){const n=+t.value;setCells(n);$('#pn').textContent=n;const e=$('#prec');if(e)e.innerHTML=recHTML()},
+  pauto(t){G.land.moveAuto=t.checked;t.blur();renderPanel()},
+  pearly(t){G.land.early=t.checked;t.blur()},
+  pirr(t){G.land.autoIrr=t.checked;t.blur()},
+  plick(t){G.land.lick=+t.value;$('#plk').textContent=num(+t.value,1)},
+  ration(t){const g=G.pens[ui.sel].group;if(!g)return;if(t.value==='a')g.auto=true;else{g.auto=false;g.slot=+t.value}t.blur();renderPanel()},
+  level(t){const g=G.pens[ui.sel].group;if(g)g.feedLevel=+t.value;t.blur();renderPanel()},
+  autotx(t){const g=G.pens[ui.sel].group;if(g)g.autoTx=t.checked;t.blur()},
+  autobuy(t){G.autoBuy=t.checked;t.blur()},
+  vet(t){G.staff.vet=t.checked?1:0;t.blur()},
+  autoscrape(t){G.autoScrape=t.checked;t.blur()},
+  mincov(t){G.minCover=+t.value;if(G.tgtCover<G.minCover+1)G.tgtCover=G.minCover+1;$('#mcv').textContent=G.minCover;$('#tcv').textContent=G.tgtCover},
+  tgtcov(t){G.tgtCover=Math.max(+t.value,G.minCover+1);$('#tcv').textContent=G.tgtCover},
+  ing(t){const i=+t.dataset.i;G.rations[ui.rEdit].p[i]=+t.value;$('#rv'+i).textContent=num(+t.value,1);$('#rsum').innerHTML=rationSum(ui.rEdit)},
+  bpen(t){ui.buy.pen=t.value==='P'?-1:+t.value;t.blur();$('#modal').firstChild.innerHTML=buyHTML();buyTotals()},
+  bn(t){ui.buy.n=+t.value;$('#bn').textContent=t.value;buyTotals()},
+  bproc(t){ui.buy.o[t.dataset.k]=t.checked?1:0;buyTotals()}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset.v,b)});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.inp&&t.type==='range')INP[t.dataset.inp](t)});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.inp&&t.type!=='range')INP[t.dataset.inp](t)});
+
+/* ============ canvas rendering ============ */
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let dpr=1,sc=1,ox=0,oy=0,CW=360,CH=280;
+function resize(){
+  const r=cv.getBoundingClientRect();dpr=window.devicePixelRatio||1;CW=r.width;CH=r.height;
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);
+  sc=Math.min(r.width/360,r.height/280);ox=(r.width-360*sc)/2;oy=(r.height-280*sc)/2;
+}
+window.addEventListener('resize',resize);
+function srand(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function penRect(i){const c=i%2,r=Math.floor(i/2);return{x:6+c*177,y:48+r*58,w:171,h:54}}
+function ensureSprites(i){
+  const p=G.pens[i],g=p.group,want=g?Math.min(g.n,48):0;
+  const a=SP[i]||(SP[i]=[]);
+  while(a.length<want){
+    const br=g?BR[g.breed]:BR.mixed;
+    a.push({x:R(.05,.95),y:R(.2,.95),tx:0,ty:0,a:R(0,6.28),t:0,lz:Math.random(),
+      col:mix(br.col,Math.random()<.5?'#000000':'#ffffff',R(0,.14)),seed:Math.random()});
+    const s=a[a.length-1];s.tx=s.x;s.ty=s.y;
+  }
+  while(a.length>want)a.pop();
+  return a;
+}
+function updateSprites(dt,hour){
+  const eat=(hour>=8&&hour<10.5)||(hour>=16&&hour<18.5),night=hour>=21||hour<5,mid=hour>=12&&hour<14.5;
+  G.pens.forEach((p,i)=>{
+    const a=ensureSprites(i);if(!a.length)return;
+    const g=p.group,k=g&&g.cases.length?Math.max(1,Math.round(g.cases.length/g.n*a.length)):0;
+    a.forEach((s,j)=>{
+      s.sick=j<k;s.t-=dt;
+      s.mode=s.sick||night?'lie':eat?'eat':mid&&s.lz<.55?'lie':'walk';
+      if(s.t<=0){
+        s.t=R(4,11);
+        if(s.mode==='eat'){s.tx=(j+.5)/a.length+R(-.01,.01);s.ty=R(.0,.06)}
+        else if(s.mode==='walk'){s.tx=clamp(s.x+R(-.3,.3),.04,.96);s.ty=clamp(s.y+R(-.3,.3),.18,.96)}
+      }
+      if(s.mode==='lie'){return}
+      const dx=s.tx-s.x,dy=s.ty-s.y,d=Math.hypot(dx,dy);
+      if(d>.012){const sp=.04*dt;s.x+=dx/d*sp;s.y+=dy/d*sp;const ta=Math.atan2(dy,dx);let da=ta-s.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;s.a+=da*Math.min(1,dt*3);s.walk=true}
+      else{s.walk=false;if(s.mode==='eat')s.a=-1.5708}
+    });
+  });
+}
+function drawCow(x,y,L0,s,breed,wob){
+  const lying=s.mode==='lie',L=L0,ry=L*(lying?.31:.26);
+  ctx.save();ctx.translate(x,y);ctx.rotate(s.a);
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(L*.05,L*.12,L*.5,ry,0,0,6.3);ctx.fill();
+  ctx.fillStyle=s.sick?mix('#8c4a28','#a33c2f',.35):s.col;
+  ctx.beginPath();ctx.ellipse(0,0,L*.5,ry,0,0,6.3);ctx.fill();
+  if(breed==='simm'||breed==='mixed'||breed==='nguni'){
+    ctx.fillStyle=breed==='nguni'?'#e8e2d6':'#f0ece4';
+    const r=srand(Math.floor(s.seed*1000));
+    const k=breed==='simm'?1:breed==='nguni'?3:1;
+    for(let q=0;q<k;q++){ctx.beginPath();ctx.ellipse((r()-.5)*L*.5,(r()-.5)*ry,L*(.12+r()*.1),ry*(.35+r()*.3),0,0,6.3);ctx.fill()}
+    if(breed==='simm'){ctx.beginPath();ctx.ellipse(L*.55,0,L*.12,L*.1,0,0,6.3);ctx.fill()}
+  }
+  if(breed==='brah'){ctx.fillStyle='rgba(60,45,30,.35)';ctx.beginPath();ctx.ellipse(L*.18,0,L*.13,ry*.7,0,0,6.3);ctx.fill()}
+  ctx.fillStyle=s.sick?'#7b3a2e':mix(s.col,'#000000',.12);
+  ctx.beginPath();ctx.ellipse(L*.54,0,L*.19,L*.14,0,0,6.3);ctx.fill();
+  ctx.beginPath();ctx.ellipse(L*.44,-L*.17,L*.07,L*.035,.6,0,6.3);ctx.ellipse(L*.44,L*.17,L*.07,L*.035,-.6,0,6.3);ctx.fill();
+  if(!lying||wob){ctx.strokeStyle=mix(s.col,'#000000',.3);ctx.lineWidth=Math.max(.6,L*.05);ctx.beginPath();ctx.moveTo(-L*.5,0);ctx.lineTo(-L*.68,Math.sin(wob)*L*.1);ctx.stroke()}
+  ctx.restore();
+}
+function drawPen(i,x,y,w,h,S,det,hour){
+  const p=G.pens[i],g=p.group,rr=srand(i+3);
+  if(!p.built){
+    ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.setLineDash([4,3]);ctx.strokeRect(x+.5,y+.5,w-1,h-1);ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,.7)';ctx.font=(det?14:8)+'px system-ui';ctx.textAlign='center';ctx.fillText('Pen for sale · '+money(penCost(i)),x+w/2,y+h/2+3);ctx.textAlign='left';return;
+  }
+  ctx.fillStyle=mix('#a07f52','#4a3a27',p.mud);ctx.fillRect(x,y,w,h);
+  // manure speckles
+  const nd=Math.round(dirt(p)*(det?60:22));ctx.fillStyle='rgba(50,38,20,.45)';
+  for(let k=0;k<nd;k++){ctx.beginPath();ctx.arc(x+rr()*w,y+h*.2+rr()*h*.8,(det?2.4:1.1)*(.6+rr()*.6),0,6.3);ctx.fill()}
+  // puddles
+  if(p.mud>.35){ctx.fillStyle='rgba(80,110,130,'+(.25+p.mud*.3)+')';const np=Math.round(p.mud*(det?7:3));for(let k=0;k<np;k++){ctx.beginPath();ctx.ellipse(x+rr()*w,y+h*.3+rr()*h*.65,(det?14:6)*(.5+rr()*.7),(det?7:3)*(.5+rr()*.7),0,0,6.3);ctx.fill()}}
+  else for(let k=0;k<3;k++)rr();
+  // bunk
+  const bh=det?22:9;
+  ctx.fillStyle='#5f5f5f';ctx.fillRect(x,y,w,bh);
+  let since=hour>=15.5?hour-15.5:hour>=7.5?hour-7.5:hour+8.5;
+  const fill=Math.max(.06,1-since/8.5);
+  if(g){ctx.fillStyle=ING.length?'#b99a4a':'#b99a4a';ctx.fillRect(x+2,y+bh*.22,(w-4)*fill,bh*.56)}
+  // water trough
+  ctx.fillStyle='#4f86a8';ctx.fillRect(x+w-(det?46:22),y+h-(det?16:7),det?40:18,det?10:4);
+  // shade
+  if(G.upg.shade){
+    const sw=w*(G.upg.shade>1?.55:.32);
+    ctx.fillStyle='rgba(20,30,15,.42)';ctx.fillRect(x+4,y+h-(det?58:22),sw,det?54:19);
+    ctx.fillStyle='#3b3328';[0,1].forEach(q=>ctx.fillRect(x+4+q*(sw-3),y+h-(det?58:22),det?3:1.5,det?54:19));
+  }
+  // sprinklers
+  if(G.upg.spr&&G.w.heat>.7){ctx.fillStyle='rgba(180,220,255,.35)';for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(x+w*(.15+k*.23),y+h*.55,det?18:7,0,6.3);ctx.fill()}}
+  // fence
+  ctx.strokeStyle='#d8cdb4';ctx.lineWidth=det?2:1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+  // cattle
+  if(g){
+    const a=ensureSprites(i),br=BR[g.breed],px=x+3,pw=w-6,py=y+bh,ph=h-bh-3;
+    const L0=S*(7+6*g.wt/500)*(det?1:1);
+    let t=performance.now()/300;
+    a.forEach(s=>{drawCow(px+s.x*pw,py+s.y*ph,L0,s,g.breed,Math.sin(t+s.seed*9)*(s.walk||s.mode==='eat'?1:0))});
+  }
+  // label
+  if(!det){
+    ctx.font='bold 7.5px system-ui';ctx.fillStyle='#fff';ctx.textAlign='left';
+    ctx.fillText('P'+(i+1)+(g?' · '+g.n+' hd · '+Math.round(shownWt(g))+' kg':' · empty'),x+3,y+7);
+    if(g){let ix=x+w-6;
+      if(g.cases.length){ctx.fillStyle='#ea6a55';ctx.beginPath();ctx.arc(ix,y+4.5,2.8,0,6.3);ctx.fill();ix-=8}
+      if(g.withdraw>0){ctx.fillStyle='#e2a63a';ctx.fillRect(ix-3,y+2,6,5);ix-=8}
+      if(g.ready){ctx.fillStyle='#82cc74';ctx.fillText('★',ix-6,y+8)}}
+  }
+}
+function drawFarm(hour){
+  // mill & silos
+  ctx.fillStyle='#7d7468';ctx.fillRect(6,6,56,30);ctx.fillStyle='#9a4538';ctx.beginPath();ctx.moveTo(4,8);ctx.lineTo(34,0);ctx.lineTo(64,8);ctx.fill();
+  ctx.fillStyle='#e9e3d0';ctx.font='bold 7px system-ui';ctx.fillText('FEED MILL',12,26);
+  const ns=1+(G.upg.silo||0);
+  for(let k=0;k<ns;k++){const cx=76+k*17;const gr=ctx.createLinearGradient(cx-7,0,cx+7,0);gr.addColorStop(0,'#8e969b');gr.addColorStop(.5,'#d6dbdc');gr.addColorStop(1,'#8e969b');ctx.fillStyle=gr;ctx.fillRect(cx-7,10,14,26);ctx.beginPath();ctx.arc(cx,10,7,Math.PI,0);ctx.fill()}
+  if(G.upg.hosp){ctx.fillStyle='#e8e4da';ctx.fillRect(292,8,30,26);ctx.fillStyle='#d34a3a';ctx.fillRect(304,13,6,16);ctx.fillRect(299,18,16,6)}
+  if(G.upg.gen){ctx.fillStyle='#d1a032';ctx.fillRect(330,16,18,12);ctx.fillStyle='#222';ctx.fillRect(333,19,5,6)}
+  // road
+  ctx.fillStyle='#8d8a82';ctx.fillRect(0,38,360,8);
+  // truck
+  let tp=-1;if(hour>=7&&hour<8.3)tp=(hour-7)/1.3;else if(hour>=15&&hour<16.3)tp=(hour-15)/1.3;
+  if(tp>=0){const tx=10+tp*320;ctx.fillStyle='#d8a520';ctx.fillRect(tx,38.5,20,7);ctx.fillStyle='#3b5a8a';ctx.fillRect(tx+20,39,6,6);ctx.fillStyle='#222';ctx.fillRect(tx+3,45,4,2);ctx.fillRect(tx+18,45,4,2)}
+  for(let i=0;i<8;i++){const r=penRect(i);drawPen(i,r.x,r.y,r.w,r.h,penCap()<=10?1.5:penCap()<=20?1.2:penCap()<=30?1:penCap()<=50?.75:.6,false,hour)}
+}
+function drawPenView(hour){
+  ctx.fillStyle='#8d8a82';ctx.fillRect(0,0,360,24);
+  let tp=-1;if(hour>=7&&hour<8.3)tp=(hour-7)/1.3;else if(hour>=15&&hour<16.3)tp=(hour-15)/1.3;
+  if(tp>=0){const tx=-30+tp*390;ctx.fillStyle='#d8a520';ctx.fillRect(tx,6,36,13);ctx.fillStyle='#3b5a8a';ctx.fillRect(tx+36,7,10,11);ctx.fillStyle='#222';ctx.fillRect(tx+5,18,7,3);ctx.fillRect(tx+30,18,7,3)}
+  drawPen(ui.sel,6,24,348,250,penCap()<=10?3.4:penCap()<=20?2.6:penCap()<=30?2.1:penCap()<=50?1.8:penCap()<=80?1.5:1.3,true,hour);
+  const p=G.pens[ui.sel],g=p.group;
+  if(g){
+    ctx.fillStyle='rgba(16,19,13,.72)';ctx.fillRect(10,50,176,g.n>48?50:36);
+    ctx.fillStyle='#ebe8da';ctx.font='bold 11px system-ui';ctx.fillText('Pen '+(ui.sel+1)+' · '+BR[g.breed].n,16,64);
+    ctx.font='10.5px system-ui';ctx.fillText(g.n+' hd · '+Math.round(shownWt(g))+' kg · day '+g.dof+(g.cases.length?' · '+g.cases.length+' sick':''),16,78);
+    if(g.n>48){ctx.font='9.5px system-ui';ctx.fillText('1 icon ≈ '+Math.round(g.n/48*10)/10+' head',16,92)}
+  }
+}
+function overlays(hour){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const w=G.w;
+  // heat / cold tint
+  if(w.heat>.8){ctx.fillStyle='rgba(255,150,40,'+Math.min(.14,w.heat*.04)+')';ctx.fillRect(0,0,CW,CH)}
+  if(w.cold>.5){ctx.fillStyle='rgba(120,170,255,'+Math.min(.14,w.cold*.07)+')';ctx.fillRect(0,0,CW,CH)}
+  if(w.rain>1){ctx.fillStyle='rgba(60,70,90,.14)';ctx.fillRect(0,0,CW,CH);ctx.strokeStyle='rgba(190,210,235,.5)';ctx.lineWidth=1;ctx.beginPath();
+    const n=Math.min(90,30+w.rain*3),t=performance.now()/1000;
+    for(let k=0;k<n;k++){const x=((k*97.3+t*60)%(CW+40))-20,y=((k*61.7+t*420)%(CH+20))-10;ctx.moveTo(x,y);ctx.lineTo(x-3,y+9)}ctx.stroke()}
+  // night
+  const night=hour>=21||hour<5?.5:hour>=19?(hour-19)/2*.5:hour<6?(6-hour)*.5:0;
+  if(night>0){ctx.fillStyle='rgba(8,14,40,'+night+')';ctx.fillRect(0,0,CW,CH)}
+}
+
+function pastLayout(){
+  const N=Math.max(1,G.land.N||1),X=8,Y=34,W=344,H=194;
+  let cols=1,bc=1e9;
+  for(let c=1;c<=Math.min(N,20);c++){const rw=Math.ceil(N/c),cost=(c*rw-N)*50+Math.abs(Math.log((W/c)/(H/rw)/1.3))*30;if(cost<bc){bc=cost;cols=c}}
+  const rows=Math.ceil(N/cols),cw=W/cols,ch=H/rows,rects=[];
+  for(let i=0;i<N;i++){const r=Math.floor(i/cols),c0=i%cols,c=r%2?cols-1-c0:c0;rects.push({x:X+c*cw,y:Y+r*ch,w:cw,h:ch})}
+  return{X,Y,W,H,cols,rows,rects};
+}
+function drawCell(c,i,r,t){
+  const st=cellState(c),col=CELLCOL[st],cl=G.land.cl;
+  ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
+  ctx.fillStyle=col[0];ctx.fillRect(r.x,r.y,r.w,r.h);
+  const rr=srand(i*13+7),frac=clamp(c.B/BOVER,0,1),n=clamp(Math.round(r.w*r.h/14),10,70),hmax=1.2+7.5*frac*Math.min(1,r.h/18+.3);
+  if(st==='ready'||st==='grow'||st==='over'){
+    ctx.strokeStyle=mix(col[0],'#000000',.28);ctx.lineWidth=1.2;ctx.beginPath();
+    for(let k=0;k<n*.6;k++){const x=r.x+rr()*r.w,y=r.y+3+rr()*(r.h-3);ctx.moveTo(x,y);ctx.lineTo(x+(rr()-.5)*2,y-hmax*(.7+rr()*.5))}
+    ctx.stroke();
+  }
+  ctx.strokeStyle=col[1];ctx.lineWidth=1;ctx.beginPath();
+  for(let k=0;k<n;k++){
+    const x=r.x+1+rr()*(r.w-2),y=r.y+2+rr()*(r.h-2),hh=hmax*(.55+rr()*.6),sw=Math.sin(t*1.6+x*.25)*frac*1.1;
+    ctx.moveTo(x,y);ctx.lineTo(x+sw+(rr()-.5)*1.5,y-hh);
+  }
+  ctx.stroke();
+  if(st==='over'){ctx.fillStyle='#f4ecae';for(let k=0;k<n*.35;k++){ctx.fillRect(r.x+rr()*r.w,r.y+rr()*r.h*.8,1.4,1.4)}}
+  else if(st==='graze'){ctx.fillStyle='rgba(60,40,20,.55)';for(let k=0;k<n*.5;k++)ctx.fillRect(r.x+rr()*r.w,r.y+rr()*r.h,1.5,1)}
+  else if(st==='bare'){ctx.fillStyle='rgba(40,30,15,.35)';for(let k=0;k<n*.5;k++)ctx.fillRect(r.x+rr()*r.w,r.y+rr()*r.h,1.4,1.2)}
+  else if(cl>.12){ctx.fillStyle='rgba(255,255,255,.9)';for(let k=0;k<n*cl*.5;k++){ctx.beginPath();ctx.arc(r.x+rr()*r.w,r.y+rr()*r.h,.9,0,6.3);ctx.fill()}}
+  ctx.restore();
+}
+function ensureSpritesP(){
+  const g=G.land.group,want=g?Math.min(g.n,48):0,a=SP[8]||(SP[8]=[]);
+  while(a.length<want){const br=BR[g.breed],s={x:R(.1,.9),y:R(.1,.9),tx:0,ty:0,a:R(0,6.28),t:0,lz:Math.random(),col:mix(br.col,Math.random()<.5?'#000000':'#ffffff',R(0,.14)),seed:Math.random()};s.tx=s.x;s.ty=s.y;a.push(s)}
+  while(a.length>want)a.pop();
+  return a;
+}
+function updateSpritesP(dt,hour){
+  const g=G.land.group;if(!g)return;
+  const a=ensureSpritesP(),night=hour>=21||hour<5,mid=hour>=11.5&&hour<14,k=g.cases.length?Math.max(1,Math.round(g.cases.length/g.n*a.length)):0;
+  a.forEach((s,j)=>{
+    s.sick=j<k;s.t-=dt;s.mode=s.sick||night?'lie':mid&&s.lz<.6?'lie':'walk';
+    if(s.t<=0){s.t=R(4,9);s.tx=clamp(s.x+R(-.35,.35),.08,.92);s.ty=clamp(s.y+R(-.35,.35),.1,.9)}
+    if(s.mode==='lie'){s.walk=false;return}
+    const dx=s.tx-s.x,dy=s.ty-s.y,d=Math.hypot(dx,dy);
+    if(d>.015){const sp=.03*dt;s.x+=dx/d*sp;s.y+=dy/d*sp;const ta=Math.atan2(dy,dx);let da=ta-s.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;s.a+=da*Math.min(1,dt*3);s.walk=true}
+    else s.walk=false;
+  });
+}
+function drawPasture(hour){
+  const LD=G.land,ha=landHa(),mx=mixOf(),t=performance.now()/1000;
+  if(!ha){
+    ctx.fillStyle='rgba(16,19,13,.65)';ctx.fillRect(0,100,360,74);ctx.fillStyle='#ebe8da';ctx.textAlign='center';
+    ctx.font='bold 14px system-ui';ctx.fillText('No land yet',180,128);ctx.font='11.5px system-ui';ctx.fillText('Lease or buy hectares in the Pasture tab',180,148);ctx.textAlign='left';return;
+  }
+  const Ly=pastLayout(),planted=mx&&LD.status!=='none';
+  if(!planted){
+    ctx.fillStyle='#8a6a45';ctx.fillRect(Ly.X,Ly.Y,Ly.W,Ly.H);ctx.fillStyle='rgba(40,30,15,.35)';const rr=srand(5);for(let k=0;k<160;k++)ctx.fillRect(Ly.X+rr()*Ly.W,Ly.Y+rr()*Ly.H,1.6,1.2);
+    ctx.fillStyle='#ebe8da';ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillText('Unplanted '+num(ha,0)+' ha block',180,Ly.Y+Ly.H/2);ctx.font='10.5px system-ui';ctx.fillText('Choose a mix in the Pasture tab',180,Ly.Y+Ly.H/2+16);ctx.textAlign='left';
+  }else Ly.rects.forEach((r,i)=>drawCell(LD.cells[i],i,r,t));
+  if(planted&&Ly.rects.length>1){ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=.6;Ly.rects.forEach(r=>ctx.strokeRect(r.x,r.y,r.w,r.h))}
+  const ar=Ly.rects[LD.active];
+  if(planted&&LD.N>1){
+    const ni=nextCell(),nr=Ly.rects[ni];
+    if(LD.group&&nr&&ni!==LD.active){ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.2;ctx.setLineDash([2,2]);ctx.strokeRect(nr.x+1,nr.y+1,nr.w-2,nr.h-2);ctx.setLineDash([]);
+      if(nr.w>26&&nr.h>12){ctx.fillStyle='#fff';ctx.font='bold 8px system-ui';ctx.fillText('next ▶',nr.x+3,nr.y+9)}}
+  }
+  if(planted&&LD.group&&ar){
+    ctx.strokeStyle='#ffd23f';ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.strokeRect(ar.x+1,ar.y+1,ar.w-2,ar.h-2);ctx.setLineDash([]);
+    ctx.fillStyle='#fff';[[ar.x,ar.y],[ar.x+ar.w,ar.y],[ar.x,ar.y+ar.h],[ar.x+ar.w,ar.y+ar.h]].forEach(q=>ctx.fillRect(q[0]-1.5,q[1]-1.5,3,3));
+    if(G.upg.pwater){ctx.fillStyle='#4f86a8';ctx.fillRect(ar.x+ar.w-Math.min(16,ar.w*.4)-2,ar.y+ar.h-6,Math.min(16,ar.w*.4),4)}
+    if(G.upg.pshade){ctx.fillStyle='rgba(20,30,15,.5)';ctx.fillRect(ar.x+2,ar.y+ar.h-Math.min(14,ar.h*.5)-2,Math.min(18,ar.w*.45),Math.min(14,ar.h*.5))}
+    const g=LD.group,a=SP[8]||[],S=clamp(Math.min(ar.w,ar.h)/22,.55,2.4),L0=S*(7+6*g.wt/500),tt=performance.now()/300;
+    a.forEach(s=>drawCow(ar.x+s.x*ar.w,ar.y+s.y*ar.h,L0,s,g.breed,Math.sin(tt+s.seed*9)*(s.walk?1:0)));
+  }
+  // perimeter fence
+  const pm=G.upg.perim,fx=Ly.X-2,fy=Ly.Y-2,fw=Ly.W+4,fh=Ly.H+4;
+  if(!pm){ctx.strokeStyle='#ea6a55';ctx.setLineDash([3,4]);ctx.lineWidth=1.2;ctx.strokeRect(fx,fy,fw,fh);ctx.setLineDash([])}
+  else{
+    ctx.strokeStyle=pm===1?'#e9e2b8':'#d8cdb4';ctx.lineWidth=pm===1?1:pm===2?1.6:2.4;if(pm===1)ctx.setLineDash([6,2]);ctx.strokeRect(fx,fy,fw,fh);ctx.setLineDash([]);
+    if(pm>=3){ctx.lineWidth=1;ctx.strokeRect(fx+2,fy+2,fw-4,fh-4)}
+    ctx.fillStyle='#6b5538';for(let x=fx;x<=fx+fw;x+=22){ctx.fillRect(x-1,fy-2,2,4);ctx.fillRect(x-1,fy+fh-2,2,4)}for(let y=fy;y<=fy+fh;y+=22){ctx.fillRect(fx-2,y-1,4,2);ctx.fillRect(fx+fw-2,y-1,4,2)}
+  }
+  if(G.upg.en){ctx.fillStyle='#9aa0a4';ctx.fillRect(fx+fw-24,fy+fh+3,10,7);ctx.fillStyle='#3c6ea8';ctx.save();ctx.translate(fx+fw-10,fy+fh+3);ctx.rotate(-.3);ctx.fillRect(0,0,12,6);ctx.restore()}
+  if(G.upg.irr){ctx.fillStyle='#6fb4dc';[.2,.5,.8].forEach(f=>{ctx.beginPath();ctx.arc(fx+fw*f,fy-1,2.2,0,6.3);ctx.fill()})}
+  // banner
+  ctx.fillStyle='rgba(16,19,13,.7)';ctx.fillRect(108,3,244,27);ctx.fillStyle='#ebe8da';ctx.font='bold 10.5px system-ui';
+  const stName={none:'Unplanted',establishing:'Establishing',established:'Established',spent:'Finished'}[LD.status];
+  ctx.fillText((mx?mx.n.replace('',''):'No pasture')+' · '+stName,114,15);ctx.font='10px system-ui';
+  ctx.fillText(LD.group?'Strip '+(LD.active+1)+' of '+LD.N+' · day '+(LD.dic+1)+' of '+moveEvery():(planted?LD.N+' strip'+(LD.N>1?'s':'')+' · no calves yet':''),114,26);
+  // legend
+  const lg=[['grow','Growing'],['ready','Ready'],['over','Overgrown'],['graze','Grazed'],['dorm','Dormant'],['bare','Bare']];let lx=8;
+  ctx.font='9px system-ui';lg.forEach(q=>{ctx.fillStyle=CELLCOL[q[0]][0];ctx.fillRect(lx,236,9,9);ctx.fillStyle='#ebe8da';ctx.fillText(q[1],lx+12,244);lx+=ctx.measureText(q[1]).width+24});
+}
+
+function draw(){
+  const hour=(6+ui.phase*24)%24;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle=mix(GRASS[month()],GRASS[(month()+1)%12],.5);ctx.fillRect(0,0,CW,CH);
+  ctx.setTransform(dpr*sc,0,0,dpr*sc,dpr*ox,dpr*oy);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,360,280);ctx.clip();
+  if(ui.view==='farm')drawFarm(hour);else if(ui.view==='past')drawPasture(hour);else drawPenView(hour);
+  ctx.restore();
+  overlays(hour);
+}
+cv.addEventListener('click',e=>{
+  if(!G||ui.modal)return;
+  const r=cv.getBoundingClientRect(),x=(e.clientX-r.left-ox)/sc,y=(e.clientY-r.top-oy)/sc;
+  if(ui.view==='past'&&landHa()&&G.land.status!=='none'){
+    const Ly=pastLayout();
+    for(let i=0;i<Ly.rects.length;i++){const q=Ly.rects[i];if(x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+q.h){const c=G.land.cells[i];toast('Strip '+(i+1)+': '+CELLNAME[cellState(c)].toLowerCase()+', '+num(c.B,0)+' kg DM/ha, rested '+c.age+' d'+(i===G.land.active&&G.land.group?' (grazing now)':''));return}}
+    return;
+  }
+  if(ui.view==='farm'){
+    for(let i=0;i<8;i++){const q=penRect(i);if(x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+q.h){ui.sel=i;ui.view=G.pens[i].built?'pen':'farm';ui.tab='pens';renderTabs();renderCtl();renderPanel();return}}
+  }
+});
+
+/* ============ main loop ============ */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(G){
+    const run=ui.speed>0&&!ui.modal&&!G.over;
+    const hour=(6+ui.phase*24)%24;
+    if(run){ui.phase+=dt*1000/DAYMS[ui.speed];if(ui.phase>=1){ui.phase-=1;if(ui.phase>1)ui.phase=0;stepDay();afterStep()}}
+    updateSprites(dt*(run?Math.max(1,ui.speed*.8):1),hour);updateSpritesP(dt*(run?Math.max(1,ui.speed*.8):1),hour);
+    draw();updateClock();
+    if(ui.toastT&&now>ui.toastT){ui.toastT=0;$('#toast').style.opacity=0}
+  }
+  requestAnimationFrame(frame);
+}
+function init(){
+  resize();
+  const s=loadSave();
+  newGame('Highveld Feedlot');
+  renderAll();
+  openModal(titleHTML());
+  requestAnimationFrame(frame);
+  window.__G=()=>G;window.__dbg={fcDay,todoItems,hayPlan,draftPen,stepDay,sell,appraise,newGame,ACT,rcalc,PRE,ING,BR,penInfo,ui,buyFeed,scrape,setCells,recDays,restTarget,cellState,moveToPen};
+}
+init();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+})();
+</script>
+</body>
+</html>
